@@ -38,13 +38,13 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directories
-node_modules/
-jspm_packages/
 
+
+# Dependency directories
+node_modules/**
 # Modified node_modules
-!/node_modules/litegraph.js/
-# 无效
+!node_modules/litegraph.js/
+jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
