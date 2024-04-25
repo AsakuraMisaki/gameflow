@@ -7,6 +7,14 @@ import {LGraph, LGraphCanvas, LiteGraph} from 'litegraph.js';
 
 var graph = new LGraph();
 
+let radian = function(a, b){
+    return Math.atan2(b._realY - a._realY, b._realX - a._realX);
+}
+
+var newNode = LiteGraph.wrapFunctionAsNode("rm/common", radian, ["Object", "Object"], "")
+newNode.title = '角度';
+newNode.desc = 'A和B之间的角度';
+
 
 var canvas = new LGraphCanvas("#graph", graph);
 
