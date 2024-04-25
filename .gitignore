@@ -42,8 +42,9 @@ build/Release
 node_modules/
 jspm_packages/
 
-# Modified dependencies
-!/node_modules/litegraph.js
+# Modified node_modules
+!/node_modules/litegraph.js/
+# 无效
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
