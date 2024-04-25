@@ -46,6 +46,7 @@ jspm_packages/
 
 # Modified node_modules
 !node_modules/litegraph.js/
+!node_modules/litegraph.js/**
 
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
