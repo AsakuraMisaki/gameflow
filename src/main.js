@@ -31,4 +31,11 @@ node_const.connect(0, node_watch, 0);
 
 graph.start();
 
+(()=>{
+    let sign = {};
+    let u0 = collider(10,0,0,'circle');
+    let u1 = collider(10,0,0,'circle');
+    let u2 = collider(10,0,0,'circle');
+})
+
 export { Backpack, Sprite, Graphics, Text, Icon };
