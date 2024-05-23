@@ -7,6 +7,12 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "t1",
+            "program": "${workspaceFolder}/t1.js",
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "build",
             "program": "${workspaceFolder}/node_modules/.bin/rollup",
             "args": [

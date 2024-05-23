@@ -6,7 +6,8 @@
 		"dev": "vite dev",
 		"build1": "vite build",
 		"preview": "vite preview",
-		"build": "npx rollup -c"
+		"build": "npx rollup -c",
+		"wasm": "wasm-pack build --target web"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^3.0.0",
@@ -21,7 +22,9 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@dimforge/rapier2d": "^0.13.1",
 		"@rollup/plugin-node-resolve": "^15.2.3",
-		"litegraph.js": "^0.7.18"
+		"litegraph.js": "^0.7.18",
+		"vite-plugin-wasm": "^3.3.0"
 	}
 }

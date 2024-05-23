@@ -8,6 +8,13 @@
 			"problemMatcher": [],
 			"label": "npm: build",
 			"detail": "webpack"
+		},
+		{
+			"type": "npm",
+			"script": "wasm",
+			"problemMatcher": [],
+			"label": "npm: wasm",
+			"detail": "wasm-pack build --target web"
 		}
 	]
 }
