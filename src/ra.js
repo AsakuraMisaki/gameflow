@@ -1,91 +1,126 @@
 import * as RAPIER from '@dimforge/rapier2d';
 
-async function r(){
+import * as PIXI from 'pixijs';
+
+async function init(){
 
     await RAPIER;
 
-    // Use the RAPIER module here.
-    let gravity = { x: 0.0, y: 10 };
+    // [init]
+    let renderer = new PIXI.Renderer({
+      backgroundColor: 0x292929,
+      antialias: true,
+      // resolution: pixelRatio,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
+    let scene = new PIXI.Container();
+    let cs = new Map(); //colliders set
+    window.cs = cs;
+    window.scene = scene;
+    document.body.appendChild(renderer.view);
+    const size = 2;
+    let colorPalette = [0xf3d9b1, 0x98c1d9, 0x053c5e, 0x1f7a8c];
+    scene.scale.x = scene.scale.y = 20;
+    let graphics = new PIXI.Graphics();
+    graphics.beginFill(colorPalette[0]);
+    graphics.drawRect(-size/2, -size/2, size, size); // rotation center
+
+    // [base render]
+    let r = ()=>{
+      renderer.render(scene);
+      requestAnimationFrame(r);
+    }
+    requestAnimationFrame(r);
+
+     // [draw]
+    const draw = ()=> {
+      cs.forEach(c => {
+          c.drawHandle();
+      })
+    }
+    const drawHandle = function(translator, collider){
+      let translation = translator.translation();
+      let half = collider.halfExtents();
+      let rotation = collider.rotation();
+      let gfx = cs.get(this).drawer;
+      Object.assign(gfx.scale, half);
+      Object.assign(gfx.position, translation);
+      gfx.rotation = rotation;
+    }
+
+    // [world]
+    let gravity = { x: 0.0, y: 9.81 };
     let world = new RAPIER.World(gravity);
 
-    let cs = [];
-    // Create the ground
-    let groundColliderDesc = RAPIER.ColliderDesc.cuboid(10.0, 0.5).setTranslation(0.0, 1.5)
-
-    let ground = world.createCollider(groundColliderDesc);
+    // [body]
     // ground
+    let groundColliderDesc = RAPIER.ColliderDesc.cuboid(10.0, 0.5).setTranslation(10.0, 30.0);
+    let ground = world.createCollider(groundColliderDesc);
+    cs.set(ground, {
+      drawer: graphics.clone(),
+      drawHandle: drawHandle.bind(ground, ground, ground)
+    })
     
-    // Create a dynamic rigid-body.
-    let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic()
-            .setTranslation(0.0, 1.0);
+    // rigidBody collider
+    let rigidBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(20.1, 0.0);
     let rigidBody = world.createRigidBody(rigidBodyDesc);
-    rigidBody.addForce(new RAPIER.Vector2(30.5, 0.0));
-    rigidBody.lockRotations(true, false);
-    // Create a cuboid collider attached to the dynamic rigidBody.
     let colliderDesc = RAPIER.ColliderDesc.cuboid(1.0, 1.0);
     let collider = world.createCollider(colliderDesc, rigidBody);
-    let scale = 10;
-    const size = 2 * scale;
-    // const h = 2 * scale;
-    collider.drawHandle = (ctx)=>{
-      let v = rigidBody.translation();
-      
-      let c = collider;
-      let s = c.halfExtents();
-      let h = s.y * size;
-      ctx.translate(v.x * size, v.y * size);
-      ctx.rotate(c.rotation());
-      console.log(c.rotation());
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(v.x, v.y, s.x * size, h);
-    }
-    ground.drawHandle = (ctx)=>{
-      let c = ground;
-      let v = c.translation();
-      let s = c.halfExtents();
-      let h = s.y * size;
-      ctx.translate(v.x * size, v.y * size);
-      ctx.rotate(ground.rotation());
-      ctx.fillStyle = 'blue';
-      ctx.fillRect(v.x, v.y, s.x * size, h);
-    }
-    // Game loop. Replace by your own game loop system.
-    cs.push(ground, collider);
-    let canvas = document.getElementById('graph');
-    let ctx = canvas.getContext('2d');
+    // rigidBody.lockRotations(true, true);
+    cs.set(collider, {
+      drawer: graphics.clone(),
+      drawHandle: drawHandle.bind(collider, rigidBody, collider)
+    })
     
-    let gameLoop = () => {
-      // Ste the simulation forward.  
+
+    
+    
+    
+    
+    
+    // [loop]
+    
+    cs.forEach((set)=>{
+      scene.addChild(set.drawer);
+    })
+    let tick = 0;
+    let pause = false;
+    let run = ()=>{
       world.step();
-
-      // Get and print the rigid-body's position.
-      // let position = rigidBody.translation();
-      // console.log("Rigid-body position: ", position.x, position.y);
-
-      draw(ctx, canvas, cs);
-
-      setTimeout(gameLoop, 16);
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+    let gameLoop = ()=> {
+      if(pause){
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+      let now = performance.now();
+      if(now - tick < 16){
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+      tick = now;
+      run();
     };
 
-    
+    let stepButton = document.getElementById('step');
+    stepButton.addEventListener('click', ()=>{
+      pause = true;
+      run();
+    });
 
-    gameLoop();
+    let playButton = document.getElementById('play');
+    playButton.addEventListener('click', ()=>{
+      pause = !pause;
+    });
+
+    run();
+    requestAnimationFrame(gameLoop);
 };
 
-function draw(ctx, canvas, cs) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const w = 100;
-  const h = 100;
-  cs.forEach(c => {
-      ctx.save();
-      c.drawHandle(ctx);
-      // ConvexPolygon
-
-      ctx.restore();
-  });
-}
-
-r();
+init();
 
 
