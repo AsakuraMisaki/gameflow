@@ -4,12 +4,20 @@ import * as PIXI from 'pixijs';
 
 import * as PolyGen from '../src/polygen';
 
-async function init(){
+import * as Box2D from '../node_modules/box2d-wasm/dist/es/Box2D.js';
 
+// Box2D().then(a=>{
+
+// })
+async function init(){
+    await Box2D;
     await RAPIER;
 
+    window.Box2D = Box2D;
     window.RAPIER = RAPIER;
-
+    Box2D.default().then((a)=>{
+      console.log(a);
+    })
     // [init]
     let renderer = new PIXI.Renderer({
       backgroundColor: 0x292929,

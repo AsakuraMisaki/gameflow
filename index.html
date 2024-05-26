@@ -5,9 +5,11 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="stylesheet" type="text/css" href="src/main.css">
 		<link rel="stylesheet" type="text/css" href="node_modules/litegraph.js/css/litegraph.css">
-		<!-- <script type="module" src="./src/main"></script>
-		<script type="module" src="./src/rustIn.js"></script> -->
-		<script type="module" src="./src/ra"></script>
+		<script src="./node_modules/box2d-wasm/dist/umd/Box2D.js"></script>
+		<script src="./node_modules/matter-js/build/matter.js"></script>
+		<script src="./src/bentest.js"></script>
+		<!-- <script type="module" src="./src/rustIn.js"></script> -->
+		<!-- <script type="module" src="./src/ra"></script> -->
 		<style>
 			/* body{
 				overflow: hidden;
@@ -15,6 +17,7 @@
 		</style>
 	</head>
 	<body>
+		<canvas id="demo-canvas" width="1920" height="1080"></canvas>
 		<img id="terrianTest" src="./src/t.png" style="position: fixed; left: 30px; top: 360px; display: none;">
 		<!-- <canvas id='graph' width=1920 height=1080></canvas> -->
 		<button id='step' style="position: fixed; width: 50px; height: 50px; left: 30px; top: 360px;"> S </button>

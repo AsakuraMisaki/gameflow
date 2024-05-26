@@ -1,5 +1,5 @@
 import * as wa from '../wasm/pkg/wasm.js';
-import {TrackedArray, ObservableElement } from '../wasm/pkg/wasm.js';
+import { TrackedArray, ObservableElement } from '../wasm/pkg/wasm.js';
 
 async function run(){
     let r = await wa.default();
