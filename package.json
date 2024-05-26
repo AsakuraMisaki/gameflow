@@ -24,6 +24,7 @@
 	"dependencies": {
 		"@dimforge/rapier2d": "^0.13.1",
 		"@rollup/plugin-node-resolve": "^15.2.3",
+		"kinetics.ts": "^1.4.1",
 		"litegraph.js": "^0.7.18",
 		"pixijs": "^7.1.4",
 		"vite-plugin-wasm": "^3.3.0"
