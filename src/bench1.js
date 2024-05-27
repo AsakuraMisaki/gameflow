@@ -30,7 +30,8 @@ let _box2d = function(box2D, boxCount){
     b2PolygonShape,
     b2World,
     JSDraw,
-    wrapPointer
+    wrapPointer,
+    destroy
   } = box2D;
 
   /** @type {HTMLCanvasElement} */
@@ -184,11 +185,14 @@ let _box2d = function(box2D, boxCount){
     if (fill) {
       //render axis marker
       const vertex = copyVec2(center);
-      vertex.op_add(scaledVec2(axis, radius));
+      const scale = scaledVec2(axis, radius);
+      vertex.op_add(scale);
       ctx.beginPath();
       ctx.moveTo(center.get_x(), center.get_y());
       ctx.lineTo(vertex.get_x(), vertex.get_y());
       ctx.stroke();
+      destroy(vertex);
+      destroy(scale);
     }
   };
 
@@ -266,6 +270,9 @@ let _box2d = function(box2D, boxCount){
       const vert1 = wrapPointer(vert1_p, b2Vec2);
       const vert2 = wrapPointer(vert2_p, b2Vec2);
       drawSegment(vert1, vert2);
+      // destroy(color);
+      // destroy(vert1);
+      // destroy(vert2);
     },
     /**
      * @param {number} vertices_p pointer to Array<{@link Box2D.b2Vec2}>
@@ -278,6 +285,8 @@ let _box2d = function(box2D, boxCount){
       setCtxColor(getRgbStr(color));
       const vertices = reifyArray(vertices_p, vertexCount, sizeOfB2Vec, b2Vec2);
       drawPolygon(vertices, vertexCount, false);
+      // destroy(vertices);
+      // destroy(color);
     },
     /**
      * @param {number} vertices_p pointer to Array<{@link Box2D.b2Vec2}>
@@ -290,6 +299,8 @@ let _box2d = function(box2D, boxCount){
       setCtxColor(getRgbStr(color));
       const vertices = reifyArray(vertices_p, vertexCount, sizeOfB2Vec, b2Vec2);
       drawPolygon(vertices, vertexCount, true);
+      // destroy(vertices);
+      // destroy(color);
     },
     /**
      * @param {number} center_p pointer to {@link Box2D.b2Vec2}
@@ -303,6 +314,9 @@ let _box2d = function(box2D, boxCount){
       const center = wrapPointer(center_p, b2Vec2);
       const dummyAxis = new b2Vec2(0,0);
       drawCircle(center, radius, dummyAxis, false);
+      // destroy(center);
+      // destroy(color);
+      destroy(dummyAxis);
     },
     /**
      * @param {number} center_p pointer to {@link Box2D.b2Vec2}
@@ -317,6 +331,9 @@ let _box2d = function(box2D, boxCount){
       const center = wrapPointer(center_p, b2Vec2);
       const axis = wrapPointer(axis_p, b2Vec2);
       drawCircle(center, radius, axis, true);
+      // destroy(center);
+      // destroy(color);
+      // destroy(axis);
     },
     /**
      * @param {number} transform_p pointer to {@link Box2D.b2Transform}
@@ -325,6 +342,7 @@ let _box2d = function(box2D, boxCount){
     DrawTransform(transform_p) {
       const transform = wrapPointer(transform_p, b2Transform);
       drawTransform(transform);
+      // destroy(transform);
     },
     /**
      * @param {number} vertex_p pointer to {@link Box2D.b2Vec2}
@@ -337,6 +355,8 @@ let _box2d = function(box2D, boxCount){
       setCtxColor(getRgbStr(color));
       const vertex = wrapPointer(vertex_p, b2Vec2);
       drawPoint(vertex, sizeMetres);
+      // destroy(color);
+      // destroy(vertex);
     }
   });
   debugDraw.SetFlags(e_shapeBit);
@@ -366,12 +386,12 @@ let _box2d = function(box2D, boxCount){
     // ctx.restore();
   };
 
-  document.getElementById('step').addEventListener('click', ()=>{
-    
+  let drawStep = ()=>{
     drawCanvas();
     world.DebugDraw();
     ctx.restore();
-  });
+  }
+  document.getElementById('step').addEventListener('click', drawStep);
 
   /** @type {?number} */
   let handle;
@@ -380,13 +400,15 @@ let _box2d = function(box2D, boxCount){
   (function loop(prevMs) {
     const nowMs = window.performance.now();
     handle = requestAnimationFrame(loop.bind(null, nowMs));
+    // if(pause) return;
     const deltaMs = nowMs-prevMs;
     step(deltaMs);
+    drawStep();
     // drawCanvas();
   }(window.performance.now()));
 }
 
-let matter2d = function(boxCount) {
+let matter2d = function(boxCount, _r = false) {
     var Engine = Matter.Engine,
         Render = Matter.Render,
         Runner = Matter.Runner,
@@ -416,7 +438,7 @@ let matter2d = function(boxCount) {
     });
 
 
-    Render.run(render);
+    _r ? Render.run(render) : null;
 
     // create runner
     var runner = Runner.create();
@@ -837,14 +859,27 @@ for (let i = 0; i < boxCount; i++) {
 }
 
 window.onload = function(){
-  box2d(2000);
-  // matter2d(2000);
-  //kinetics2d();
+  box2d(1000);
+  // matter2d(1000, true);
+  // kinetics2d(1000);
+  
+
+  showPerformance();
+}
+
+showPerformance = function(){
   let infoer = document.getElementById('debug');
+  // setInterval(()=>{
+  //   infoer.innerText = `${performance.memory.usedJSHeapSize/1024/1024}M`;
+  // }, 1000);
   let now0 = performance.now();
-  setInterval(()=>{
+
+  (function cal(){
     let now = performance.now();
-    infoer.innerText = `${now - now0}ms . ${performance.memory.usedJSHeapSize/1024/1024}M`;
+    infoer.innerText = `${performance.memory.usedJSHeapSize/1024/1024}M \n ${now - now0}ms`;
     now0 = now;
-  }, 1000);
+    requestAnimationFrame(cal);
+  })();
+  
+  
 }
