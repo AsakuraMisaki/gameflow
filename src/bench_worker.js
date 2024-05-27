@@ -26,6 +26,9 @@ onmessage = (m)=>{
   }
 }
 
+let log = { };
+
+
 function init (box2D, boxCount){
   const {
     b2_dynamicBody,
@@ -37,11 +40,14 @@ function init (box2D, boxCount){
     b2Transform,
     b2Vec2,
     b2PolygonShape,
+    b2ChainShape,
     b2World,
     JSDraw,
     wrapPointer,
     destroy
   } = box2D;
+
+  
 
   let stack = [];
   
@@ -83,6 +89,7 @@ function init (box2D, boxCount){
   const circle = new b2CircleShape();
   circle.set_m_radius(sideLengthMetres/2);
 
+
   const ZERO = new b2Vec2(0, 0);
   const temp = new b2Vec2(0, 0);
   /**
@@ -97,6 +104,32 @@ function init (box2D, boxCount){
     body.SetAwake(1);
     body.SetEnabled(1);
   }
+
+  const chainPoly = (array)=>{
+    let verts = [];
+    array.forEach((v)=>{
+      verts.push(new b2Vec2(v.x, v.y));
+    })
+    verts.push(new b2Vec2(array[0].x, array[1].y));
+    let shape = new b2PolygonShape();
+    shape.Set(verts, verts.length);
+    const bd = new b2BodyDef();
+    bd.set_type(b2_dynamicBody);
+    bd.set_position(ZERO);
+    const body = world.CreateBody(bd);
+    body.CreateFixture(shape, 1);
+    initPosition(body, 0);
+    verts.forEach((v)=>{
+      destroy(v);
+    })
+    log.shape = shape;
+    return body;
+  }
+
+  // Test
+  const chain = chainPoly(globalCache['./img/mapCollider/1.svg'][0]);
+  console.log(chain);
+  log.chain = chain;
 
   // make falling boxes
   // const boxCount = 5000;
