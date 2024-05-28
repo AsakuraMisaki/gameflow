@@ -160,7 +160,7 @@ let r = function(){
   //   stack.pop();
   // })();
 
-  ctx.fillStyle = 'rgb(0,0,0)';
+  ctx.fillStyle = '#4F2EDF';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.scale(pixelsPerMeter, pixelsPerMeter);

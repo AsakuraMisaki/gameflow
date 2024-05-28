@@ -2,6 +2,12 @@
 //existing C++ code a pain in the butt. This function can be used
 //to make everything in the Box2D namespace available without
 //needing to do that.
+// let Box2D;
+
+// let Box2Dhelpers = (box2d)=>{
+//     Box2D = box2d;
+// }
+
 function using(ns, pattern) {    
     if (pattern == undefined) {
         // import all
@@ -54,7 +60,7 @@ function createChainShape(vertices, closedLoop) {
         shape.CreateLoop(ptr_wrapped, vertices.length);
     else
         shape.CreateChain(ptr_wrapped, vertices.length);
-    return shape;
+    return { shape, ptr_wrapped };
 }
 
 function createPolygonShape(vertices) {
@@ -68,7 +74,7 @@ function createPolygonShape(vertices) {
     }            
     var ptr_wrapped = Box2D.wrapPointer(buffer, Box2D.b2Vec2);
     shape.Set(ptr_wrapped, vertices.length);
-    return shape;
+    return { shape, ptr_wrapped:buffer };
 }
 
 function createRandomPolygonShape(radius) {

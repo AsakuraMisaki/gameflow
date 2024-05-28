@@ -26,6 +26,7 @@
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"benchmark": "^2.1.4",
 		"box2d-wasm": "^7.0.0",
+		"earcut": "^2.2.4",
 		"kinetics.ts": "^1.4.1",
 		"litegraph.js": "^0.7.18",
 		"matter-js": "^0.19.0",
