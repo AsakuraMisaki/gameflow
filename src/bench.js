@@ -1,5 +1,11 @@
+import * as marchingSquares from 'marchingsquares';
+
+import simplify from 'simplify-js';
+
+// const marchingSquares = require('marchingsquares');
 
 let api = new Worker('./src/bench_worker.js');
+
 // Box2D().then((b)=>{
 //   console.log(b);
 // })
@@ -214,8 +220,119 @@ let showPerformance = function(){
     now0 = now;
     requestAnimationFrame(cal);
   })();
+
+  terrain();
+}
+
+console.log(marchingSquares);
+function terrain(){
+  // 获取canvas元素和上下文
+  const canvas = document.getElementById('terrainCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // 设置canvas的宽高
+  const width = canvas.width;
+  const height = canvas.height;
+
+  let startDraw = (ev)=>{
+    if(!start) return;
+    // const starter = {x, y} = ev;
+    // console.log(starter);
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    let r = Math.random() * 15 + 15;
+    ctx.arc(ev.x, ev.y, r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  let start = false;
+  canvas.addEventListener('pointerdown', ()=>{
+    start = true;
+  });
+  canvas.addEventListener('pointermove', startDraw);
+  window.addEventListener('pointerup', ()=>{
+    start = false;
+    drawContours();
+  });
+
+  // 绘制一些随机形状（可以根据需要修改）
+  function drawShapes() {
+      ctx.fillStyle = 'white';
+      // ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      ctx.fillStyle = 'black';
+      
+      // ctx.beginPath();
+      // ctx.arc(300, 300, 50, 0, 2 * Math.PI);
+      // ctx.fill();
+  }
+
+  // 将Canvas图像数据转换为二进制网格
+  function getGridFromCanvas(ctx, width, height) {
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      const grid = [];
+
+      for (let y = 0; y < height; y++) {
+          const row = [];
+          for (let x = 0; x < width; x++) {
+              const index = (y * width + x) * 4;
+              const alpha = data[index + 3];
+              row.push(
+                  alpha > 128 ? 1 : 0);
+          }
+          grid.push(row);
+      }
+
+      return grid;
+  }
   
-  
+  let contours = [];
+  let length = 0;
+  let index = 0;
+  let contoursCopy = [];
+  setInterval(()=>{
+    if(!contours.length && contoursCopy.length){
+      api.postMessage({forwardPoly:contoursCopy});
+      contoursCopy = [];
+      return;
+    }
+    if(!contours.length) return;
+    const {x, y} = contours.shift();
+    ctx.fillStyle = 'red';
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }, 24)
+  // requestAnimationFrame()
+
+  // 提取轮廓并绘制到Canvas上
+  function drawContours() {
+      const grid = getGridFromCanvas(ctx, width, height);
+      const _contours = marchingSquares.isoLines(grid, 0.1);
+
+      let ccc = [];
+      _contours.forEach((v)=>{
+        let nv = v.map((_)=>{
+          return {x:_[0], y:_[1]}
+        })
+        ccc.push(simplify(nv, 10, true))
+      })
+      
+      ctx.fillStyle = 'red';
+      ctx.lineWidth = 2;
+
+      contours = ccc[ccc.length-1];
+      
+      console.log(contours);
+      contoursCopy = Array.from(contours);
+  }
+
+  // 绘制形状并提取和绘制轮廓
+  drawShapes();
+  drawContours();
+
 }
 
 window.onload = r;

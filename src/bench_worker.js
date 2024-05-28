@@ -28,18 +28,25 @@ wasmInit();
 // }
 // wasmInit();
 
-let pause = false;
-onmessage = (m)=>{
-  const data = m.data;
-  if(data.pause == 1){
-    pause = !pause;
-  }
-}
+
 
 let log = { };
 
 
+
+
 function init1() {
+    let pause = false;
+    onmessage = (m)=>{
+      const data = m.data;
+      if(data.pause == 1){
+        pause = !pause;
+      }
+      else if(data.forwardPoly){
+        forwardPoly(data.forwardPoly);  
+      }
+    }
+
     const {b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color} = Box2D;
 
     const gravity = new b2Vec2(0.0, 10.0);
@@ -82,7 +89,23 @@ function init1() {
       world.SetDebugDraw(draw);
     
 
-    
+      forwardPoly = (_forwardPoly)=>{
+        // const {b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color} = Box2D;
+        let verts1 = [];
+        verts1.push(anyPolygonLite(_forwardPoly));
+        let verts = [];
+        let scale = 0.02;
+        verts1.forEach((vs) => {
+            let tris = earcutTris(vs);
+            verts = verts.concat(tris);
+        })
+        const bd = new b2BodyDef();
+        bd.set_type(b2_dynamicBody);
+        const body = world.CreateBody(bd);
+        buildTrisFixtures(verts, body, scale);
+        let temp1 = new b2Vec2(0, 15);
+        body.SetTransform(temp1, 0);
+      }
     
     
 
@@ -120,6 +143,7 @@ function init1() {
                 new b2Vec2(x3, y3)
             ]);
         })
+        console.warn(`tri number ${verts.length}`);
         return verts;
     }
     function createPolygonShape(vertices, scale = 1) {
@@ -149,7 +173,7 @@ function init1() {
         })
     }
     let verts1 = [];
-    globalCache['./img/mapCollider/4.svg'].forEach((v) => {
+    globalCache['./img/mapCollider/boss1.svg'].forEach((v) => {
         verts1.push(anyPolygonLite(v));
     })
     let verts = [];
