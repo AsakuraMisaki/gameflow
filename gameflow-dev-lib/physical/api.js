@@ -3,12 +3,9 @@ importScripts('../other/globalCache.js');
 importScripts('../support/earcut.js');
 importScripts('../support/decomp.js');
 importScripts('../support/poly-partition.js');
+importScripts('../support/comlink.js');
 
 console.warn(polyPartition);
-// importScripts('../require.js');
-// importScripts('./lib/umd/embox2d-helpers.js');
-
-// console.warn(globalCache);
 
 async function wasmInit() {
   // console.log(Box2D);
@@ -22,6 +19,8 @@ wasmInit();
 const init1 = () => {
   let pause, frame = 20, __frame = 20;
 
+  
+
   onmessage = (m) => {
     const data = m.data;
     if (data.frame){
@@ -31,13 +30,13 @@ const init1 = () => {
       pause = data.pause;
     }
     else if (data.forwardPoly) {
-      forwardPoly(data.forwardPoly);
+      createPolyBody(data.forwardPoly);
     }
   }
 
-  const { b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color } = Box2D;
+  const { b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color, destroy } = Box2D;
 
-  const gravity = new b2Vec2(0.0, 9.81);
+  const gravity = new b2Vec2(0.0, 0.0);
   const world = new b2World(gravity);
   const draw = new JSDraw();
   draw.SetFlags(b2Draw.e_shapeBit);
@@ -74,14 +73,36 @@ const init1 = () => {
   draw.DrawSolidPolygon = draw.DrawPolygon;
   world.SetDebugDraw(draw);
 
-  const forwardPoly = (_forwardPoly) => {
-    let verts1 = [];
-    const polyverts = _forwardPoly.map((v)=>{
-      return [v.x, v.y];
-    })
-    // decomp.makeCCW(polyverts);
-    // console.warn(polyverts);
-    let convexPolygons = polyPartition.convexPartition(_forwardPoly, true);
+  function bodyContexter(){ this.init(...arguments) };
+  bodyContexter.prototype.constructor = bodyContexter;
+  bodyContexter.prototype.init = function(body, bd){
+    this.body = body;
+    this.bd = bd;
+  }
+  bodyContexter.prototype.setTransform = function(x, y, rotate=0){
+    const v = new b2Vec2(x, y);
+    this.body.setTransform(v, rotate);
+    destroy(v);
+  }
+  bodyContexter.prototype.getBody = function(){
+    return this.body;
+  }
+  bodyContexter.prototype.destroy = function(){
+    destroy(this.body);
+    destroy(this.bd);
+  }
+
+  const createPolyBody = (verts, dynamic=true, scale=1) => {
+    const bd = new b2BodyDef();
+    dynamic ? bd.set_type(b2_dynamicBody) : null;
+    let body = world.CreateBody(bd);
+    const convexPolygons = cut(verts);
+    buildTrisFixtures(convexPolygons, body, scale);
+    return body;
+  }
+
+  function cut(verts){
+    let convexPolygons = polyPartition.convexPartition(verts, true);
     
     let newConvexPolygons = [];
     convexPolygons = convexPolygons.forEach((vs)=>{
@@ -95,35 +116,9 @@ const init1 = () => {
         newConvexPolygons = newConvexPolygons.concat(cs);
       }
     })
+
     console.warn(newConvexPolygons);
-    // verts1.push(anyPolygonLite(_forwardPoly));
-    // let verts = [];
-    let scale = 1;
-    // verts1.forEach((vs) => {
-    //   let tris = earcutTris(vs);
-    //   verts = verts.concat(tris);
-    // })
-    // console.log(verts);
-    const bd = new b2BodyDef();
-    bd.set_type(b2_dynamicBody);
-    const body = world.CreateBody(bd);
-    // const fixtureDef = new b2FixtureDef();
-    // const temp = convexPolygons.forEach((v) => {
-    //   let shape = createPolygonShape(v);
-    // })
-    
-    // var shape = createChainShape(vs, scale);
-    // const polygonShape = shape;
-    // fixtureDef.set_shape(polygonShape);
-    // fixtureDef.set_density(1);
-    // body.CreateFixture(fixtureDef);
-    // Box2D.destroy(fixtureDef);
-    // Box2D.destroy(polygonShape);
-    // // console.log(temp);
-    buildTrisFixtures(newConvexPolygons, body, scale);
-    // // buildChainFixtures(_forwardPoly, body, scale);
-    // let temp1 = new b2Vec2(25, 20);
-    // body.SetTransform(temp1, 0);
+    return newConvexPolygons;
   }
 
   function anyPolygonLite(array) {
@@ -142,39 +137,10 @@ const init1 = () => {
     const adjacency = buildAdjacency(edges);
     const mergedPolygons = mergeTriangles(adjacency);
     console.warn(mergedPolygons);
-    // earcut vertices index translation
-    // indexs.forEach((v, i) => {
-    //   if (i % 3) return;
-
-    //   const index1 = indexs[i];
-    //   const index2 = indexs[i + 1];
-    //   const index3 = indexs[i + 2];
-
-    //   const x1 = verts1[index1 * 2];
-    //   const y1 = verts1[index1 * 2 + 1];
-    //   const x2 = verts1[index2 * 2];
-    //   const y2 = verts1[index2 * 2 + 1];
-    //   const x3 = verts1[index3 * 2];
-    //   const y3 = verts1[index3 * 2 + 1];
-
-    //   verts.push([{ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }]);
-    // })
-    console.warn(`tri number ${verts.length}`);
+    console.warn(`poly number ${verts.length}`);
     return verts;
   }
-  // const earcut = require('earcut');
 
-  // 示例多边形（无孔）
-  // const vertices = [0, 0, 10, 0, 10, 10, 0, 10];
-
-  // // 使用 Earcut 进行三角剖分
-  // const triangles = earcut(vertices);
-
-  
-
-  
-
-  
 
   function createPolygonShape(vertices, scale = 1) {
     var shape = new Box2D.b2PolygonShape();
@@ -219,6 +185,15 @@ const init1 = () => {
       Box2D.destroy(polygonShape);
     })
   }
+
+  /**
+   * @deprecated
+   * @param {any} verts
+   * @param {any} body
+   * @param {any} scale=1
+   * @param {any} fixture=b2FixtureDef
+   * @returns {any}
+   */
   function buildChainFixtures(verts, body, scale = 1, fixture = b2FixtureDef) {
     if (!Array.isArray(verts[0])) verts = [verts];
     verts.forEach((vs) => {
@@ -233,6 +208,7 @@ const init1 = () => {
     })
   }
 
+
   let stack = [];
   const _run = ()=>{
     // requestAnimationFrame(_run);
@@ -241,8 +217,9 @@ const init1 = () => {
     main();
   }
 
+  console.log(world.Step)
   const main = ()=>{
-    world.Step(1 / 60, 6, 2);
+    world.Step(1 / 30, 2, 2);
     world.DrawDebugData();
     // console.log(body.GetPosition().y);
     world.ClearForces();
@@ -251,13 +228,74 @@ const init1 = () => {
   } 
 
   const run = ()=>{
+    // [Dangerous] high frequency is [NOT ALLOWED] in some nodejs application 
     setInterval(()=>{
       _run();
-    }, 100/1000)
+    }, 1000 / 60);
     // requestAnimationFrame(_run);
   }
 
   run();
+
+  // Interface for main thread
+  let id = 0;
+  const _createColliderGroup = function(name){
+    _Interface.group.set(name, new Map());
+  }
+  const _createCircleBody = function(radius, groupname){
+    
+  }
+  const _createPolyBody = function(verts, dynamic=true, scale=1, groupname, data={ }){
+    let body = createPolyBody(verts, dynamic, scale);
+    if(!body) return;
+    body.id = (id++);
+    console.warn(body);
+    if(groupname){
+      _setBodyGroup(groupname, body, data);
+    }
+    _Interface.group.set(body.id, { body, data });
+    return body.id;
+  }
+  const _setBodyGroup = function(groupname, body, data={ }){
+    let group = _Interface.group.get(groupname);
+    if(!group) return;
+    group.set(body.id, { body, data });
+  }
+  const _position = function(id){
+    let data = _Interface.group.get(id);
+    if(!data || !data.body) return;
+    let p = body.GetPosition();
+    const result = { x:p.x, y:p.y };
+    return result;
+  }
+  const _force = function(id, x, y){
+    let data = _Interface.group.get(id);
+    if(!data || !data.body) return;
+    let v = new b2Vec2(x, y);
+    body.ApplyForceToCenter(v);
+    destroy(v);
+  }
+  const printInterface = function(warn = true){
+    warn ? console.warn(_Interface) : console.log(_Interface);
+  }
+  const _Interface = {
+    group: new Map(),
+    flags: new Map(),
+    printInterface,
+    context:{
+      _createColliderGroup,
+      _createPolyBody,
+      _setBodyGroup,
+    },
+    body:{
+      _position,
+      _force,
+    }
+  }
+  
+  
+
+  Comlink.expose(_Interface);
   
   // let scale = 0.5;
   // const bd = new b2BodyDef();

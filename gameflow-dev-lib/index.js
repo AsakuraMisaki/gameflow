@@ -1,33 +1,60 @@
-
-// console.warn(gameflowEntry);
-const path = gameflowEntry.path();
-// console.log(require == requirejs);
+const path = Gameflow.path();
 
 requirejs.config({
   baseUrl: path + './gameflow-dev-lib',
   paths: {
     config: './gameflow.config',
+    comlink: './support/comlink',
     support: './support',
     animation: './animation',
     physical: './physical',
     queryobj: './queryobj',
   }
 });
-gameflowEntry.requirePolyFill(requirejs);
+const requirePolyFill = function(path){
+  let initArgs = Array.from(arguments).slice(1, arguments.length);
+  let resolve;
+  let promise = new Promise((r)=>{
+      resolve = r;
+  })
+  requirejs([path], (m)=>{
+    let initCallback = m.__INIT__;
+    initCallback ? initCallback(...initArgs) : null;
+    resolve(m); 
+  })
+  return promise; 
+}
+Gameflow.require = requirePolyFill;
+Gameflow.abspath = path;
 
 
 async function init(){
+
+  if(typeof(Comlink) == 'undefined'){
+    Gameflow.global.Comlink = await Gameflow.require('comlink');
+  }
   
-  let config = await __require__('config');
+  let config = await Gameflow.require('config');
   console.log(config);
 
-  let physical = await __require__('physical/index', path + './gameflow-dev-lib/physical/', path);
-  console.log(physical);
+  let physical = await Gameflow.require('physical/index', path + './gameflow-dev-lib/physical/', path);
+  console.warn(physical.worker);
+  // [test]
+  let verts = [
+    { x: 9.876+20, y: 1.234+20 },
+    { x: 7.654+20, y: 6.789+20 },
+    { x: 3.210+20, y: 9.876+20 },
+    { x: -1.234+20, y: 9.543+20 },
+    { x: -5.432+20, y: 8.765+20 },
+    { x: -9.876+20, y: 6.543+20 },
+    { x: -8.765+20, y: 2.345+20 },
+    { x: -6.543+20, y: -1.234+20 }
+  ]
+  Gameflow.DevRegister('physical', physical);
   physical.render();
-  physical.terrain(0.5);
+  physical.terrain(0.2);
   
   console.log('requirejs work');
-  __GLOBAL__.box2d = physical;
 };
 
 

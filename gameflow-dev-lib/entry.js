@@ -1,12 +1,20 @@
-const __GLOBAL__ = typeof(window) != 'undefined' ? window : typeof(self) != 'undefined' ? self : 
-typeof(globalThis) != 'undefined' ? globalThis : typeof(global) != 'undefined' ? global : null;
-            
+
+// var GameflowDev = { };            
 (function (exports) { 'use strict';
-  exports.__name__ = 'gameflowEntry';
+  exports.__name__ = 'Gameflow';
 
-  // local with no ip, no port
-  // document.gameflowlocaling = '^';
+  exports.global = typeof(window) != 'undefined' ? window : typeof(self) != 'undefined' ? self : 
+  typeof(globalThis) != 'undefined' ? globalThis : typeof(global) != 'undefined' ? global : null;
 
+  let Dev = { };
+  exports.Dev = Dev;
+
+  exports.DevRegister = function(name, any){
+    Dev[name] = any;
+  }
+
+
+  // dev config
   const isLocal = function(force){
     if(force) return;
     if(typeof(document) == 'undefined') return;
@@ -38,22 +46,6 @@ typeof(globalThis) != 'undefined' ? globalThis : typeof(global) != 'undefined' ?
     else return `http://${ip(force)}:${port(force)}/`;
   }
 
-  const requirePolyFill = function(requirejs){
-    __GLOBAL__.__require__ = function(path){
-        let initArgs = Array.from(arguments).slice(1, arguments.length);
-        let resolve;
-        let promise = new Promise((r)=>{
-            resolve = r;
-        })
-        requirejs([path], (m)=>{
-            resolve(m);
-            let initCallback = m.__INIT__;
-            initCallback ? initCallback(...initArgs) : null;
-        })
-        return promise; 
-    }
-  }
-
   function delayRequireJs(){
     let script = document.createElement('script');
     script.src = `${path()}./gameflow-dev-lib/require.js`;
@@ -68,7 +60,7 @@ typeof(globalThis) != 'undefined' ? globalThis : typeof(global) != 'undefined' ?
   exports.port = port;
   exports.path = path;
   exports.delayRequireJs = delayRequireJs;
-  exports.requirePolyFill = requirePolyFill;
+  
 
  
   // [static] export as AMD module / Node module / browser or worker variable;

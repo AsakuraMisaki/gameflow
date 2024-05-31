@@ -244,7 +244,7 @@
                 throw new Error('Polygon should be counterclockwise');
             }
         }
-        if (polygon.length < 4) {
+        if (polygon.length <= 8) {
             return [polygon];
         }
         var len = polygon.length;

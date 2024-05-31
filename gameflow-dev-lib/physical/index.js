@@ -1,7 +1,7 @@
 (function (exports) { 'use strict';
   exports.__name__ = 'gameflowEntry';
 
-  let api;
+  let api, worker;
   let canvas, ctx, width, height, canvascolor;
   let pause, step, control, frame = 20, __frame = 20;
   let debug;
@@ -12,7 +12,14 @@
   exports.__INIT__ = (_path, apath)=>{
     path = apath;
     api = new Worker(_path + './api.js');
+    worker = Comlink.wrap(api);
+    exports.worker = worker;
   }
+
+  const checkWorkerInterface = async function(){
+    await worker.printInterface();
+  }
+  exports.checkWorkerInterface = checkWorkerInterface;
 
   const resetTestbed = (_control=true, w=800, h=600, fill=0)=>{
     debug = document.createElement('p');
@@ -218,7 +225,7 @@
   
 
   async function terrain(s = 0.4){
-    let promiseb = await __require__('support/promiseb');
+    let promiseb = await Gameflow.require('support/promiseb');
     let img = await promiseb.loadImage(path + './gameflow-dev-lib/temp/t1.png');
     
     console.log(img);
@@ -232,10 +239,10 @@
     resize(drawWidth + safe, drawHeight + safe);
     ctx.drawImage(img, 0, 0, img.width, img.height, safePadding, safePadding, drawWidth, drawHeight);
 
-    let marchingSquares = await __require__('support/marchingSquares');
-    let trans = await __require__('support/translation', marchingSquares, '?');
+    let marchingSquares = await Gameflow.require('support/marchingSquares');
+    let trans = await Gameflow.require('support/translation', marchingSquares, '?');
     let squares = trans.getMarchingSquares(ctx, canvas.width, canvas.height);
-    let simplify = await __require__('support/simplify');
+    let simplify = await Gameflow.require('support/simplify');
 
     let ccc = [];
     console.log(squares);
@@ -290,27 +297,12 @@
   setFrame(1);
 
 
-
-
-// terrain();
-
-
-
-// console.log(marchingSquares);
-// async function terrain(){
+  
   
 
-//   // 获取canvas元素和上下文
-//   const canvas = document.getElementById('terrainCanvas');
-//   const ctx = canvas.getContext('2d');
-
-
-
-//   // 设置canvas的宽高
-//   const width = canvas.width;
-//   const height = canvas.height;
 
   
+
 
 //   let startDraw = (ev)=>{
 //     if(!start) return;
@@ -322,7 +314,6 @@
 //     ctx.arc(ev.x, ev.y, r, 0, 2 * Math.PI);
 //     ctx.fill();
 //   }
-
 //   let start = false;
 //   canvas.addEventListener('pointerdown', ()=>{
 //     start = true;
@@ -333,33 +324,6 @@
 //     drawContours();
 //   });
 
-//   // 绘制一些随机形状（可以根据需要修改）
-//   function drawShapes() {
-//       ctx.fillStyle = 'black';
-//       // ctx.fillRect(0, 0, canvas.width, canvas.height);
-//       ctx.restore();
-//       ctx.fillStyle = 'white';
-      
-//       // ctx.beginPath();
-//       // ctx.arc(300, 300, 50, 0, 2 * Math.PI);
-//       // ctx.fill();
-//   }
-//   drawShapes();
-  
-
-  
-
-//   // requestAnimationFrame()
-
-
-
-//   // window.drawContours = drawContours;
-
-//   // 绘制形状并提取和绘制轮廓
-//   // drawShapes();
-//   drawContours();
-
-// }
 
 
   // [static] export as AMD module / Node module / browser or worker variable;
