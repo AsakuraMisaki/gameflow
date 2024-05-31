@@ -1,10 +1,14 @@
 importScripts('./Box2D_v2.3.1_min.js');
 importScripts('../other/globalCache.js');
 importScripts('../support/earcut.js');
+importScripts('../support/decomp.js');
+importScripts('../support/poly-partition.js');
+
+console.warn(polyPartition);
 // importScripts('../require.js');
 // importScripts('./lib/umd/embox2d-helpers.js');
 
-console.warn(globalCache);
+// console.warn(globalCache);
 
 async function wasmInit() {
   // console.log(Box2D);
@@ -72,26 +76,54 @@ const init1 = () => {
 
   const forwardPoly = (_forwardPoly) => {
     let verts1 = [];
-    verts1.push(anyPolygonLite(_forwardPoly));
-    let verts = [];
-    let scale = 0.02;
-    verts1.forEach((vs) => {
-      let tris = earcutTris(vs);
-      verts = verts.concat(tris);
+    const polyverts = _forwardPoly.map((v)=>{
+      return [v.x, v.y];
     })
-    console.log(verts);
+    // decomp.makeCCW(polyverts);
+    // console.warn(polyverts);
+    let convexPolygons = polyPartition.convexPartition(_forwardPoly, true);
+    
+    let newConvexPolygons = [];
+    convexPolygons = convexPolygons.forEach((vs)=>{
+      if(vs.length <= 8){
+        newConvexPolygons.push(vs);
+        return;
+      }
+      else{
+        console.warn(vs);
+        let cs = polyPartition.triangulate(vs, true);
+        newConvexPolygons = newConvexPolygons.concat(cs);
+      }
+    })
+    console.warn(newConvexPolygons);
+    // verts1.push(anyPolygonLite(_forwardPoly));
+    // let verts = [];
+    let scale = 1;
+    // verts1.forEach((vs) => {
+    //   let tris = earcutTris(vs);
+    //   verts = verts.concat(tris);
+    // })
+    // console.log(verts);
     const bd = new b2BodyDef();
-    // bd.set_type(b2_dynamicBody);
+    bd.set_type(b2_dynamicBody);
     const body = world.CreateBody(bd);
-
-    const temp = _forwardPoly.map((v) => {
-      return new b2Vec2(v.x, v.y);
-    })
-    // console.log(temp);
-    buildTrisFixtures(verts, body, scale);
-    // buildChainFixtures(_forwardPoly, body, scale);
-    let temp1 = new b2Vec2(25, 20);
-    body.SetTransform(temp1, 0);
+    // const fixtureDef = new b2FixtureDef();
+    // const temp = convexPolygons.forEach((v) => {
+    //   let shape = createPolygonShape(v);
+    // })
+    
+    // var shape = createChainShape(vs, scale);
+    // const polygonShape = shape;
+    // fixtureDef.set_shape(polygonShape);
+    // fixtureDef.set_density(1);
+    // body.CreateFixture(fixtureDef);
+    // Box2D.destroy(fixtureDef);
+    // Box2D.destroy(polygonShape);
+    // // console.log(temp);
+    buildTrisFixtures(newConvexPolygons, body, scale);
+    // // buildChainFixtures(_forwardPoly, body, scale);
+    // let temp1 = new b2Vec2(25, 20);
+    // body.SetTransform(temp1, 0);
   }
 
   function anyPolygonLite(array) {
@@ -104,28 +136,46 @@ const init1 = () => {
     return verts1;
   }
   function earcutTris(verts1) {
-    let indexs = earcut(verts1);
+    let triangles = earcut(verts1);
     let verts = [];
+    const edges = getEdges(triangles);
+    const adjacency = buildAdjacency(edges);
+    const mergedPolygons = mergeTriangles(adjacency);
+    console.warn(mergedPolygons);
     // earcut vertices index translation
-    indexs.forEach((v, i) => {
-      if (i % 3) return;
+    // indexs.forEach((v, i) => {
+    //   if (i % 3) return;
 
-      const index1 = indexs[i];
-      const index2 = indexs[i + 1];
-      const index3 = indexs[i + 2];
+    //   const index1 = indexs[i];
+    //   const index2 = indexs[i + 1];
+    //   const index3 = indexs[i + 2];
 
-      const x1 = verts1[index1 * 2];
-      const y1 = verts1[index1 * 2 + 1];
-      const x2 = verts1[index2 * 2];
-      const y2 = verts1[index2 * 2 + 1];
-      const x3 = verts1[index3 * 2];
-      const y3 = verts1[index3 * 2 + 1];
+    //   const x1 = verts1[index1 * 2];
+    //   const y1 = verts1[index1 * 2 + 1];
+    //   const x2 = verts1[index2 * 2];
+    //   const y2 = verts1[index2 * 2 + 1];
+    //   const x3 = verts1[index3 * 2];
+    //   const y3 = verts1[index3 * 2 + 1];
 
-      verts.push([{ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }]);
-    })
+    //   verts.push([{ x: x1, y: y1 }, { x: x2, y: y2 }, { x: x3, y: y3 }]);
+    // })
     console.warn(`tri number ${verts.length}`);
     return verts;
   }
+  // const earcut = require('earcut');
+
+  // 示例多边形（无孔）
+  // const vertices = [0, 0, 10, 0, 10, 10, 0, 10];
+
+  // // 使用 Earcut 进行三角剖分
+  // const triangles = earcut(vertices);
+
+  
+
+  
+
+  
+
   function createPolygonShape(vertices, scale = 1) {
     var shape = new Box2D.b2PolygonShape();
     var buffer = Box2D._malloc(vertices.length * 8);
@@ -158,7 +208,7 @@ const init1 = () => {
   }
   function buildTrisFixtures(verts, body, scale = 1, fixture = b2FixtureDef) {
     console.warn('tri count ' + verts.length)
-    verts.forEach((vs) => {
+    verts.forEach((vs, i) => {
       const fixtureDef = new fixture();
       var shape = createPolygonShape(vs, scale);
       const polygonShape = shape;
@@ -209,17 +259,17 @@ const init1 = () => {
 
   run();
   
-  let scale = 0.5;
-  const bd = new b2BodyDef();
-  // bd.set_type(b2_dynamicBody);
+  // let scale = 0.5;
+  // const bd = new b2BodyDef();
+  // // bd.set_type(b2_dynamicBody);
   
-  const body = world.CreateBody(bd);
+  // const body = world.CreateBody(bd);
   
-  buildTrisFixtures(globalCache['testtri'], body, scale);
-  // buildChainFixtures(globalCache['./img/mapCollider/boss1.svg'][0], body, 0.02);
-  let temp1 = new b2Vec2(0, 0);
-  body.SetTransform(temp1, 0);
-  console.log(body);
+  // buildTrisFixtures(globalCache['testtri'], body, scale);
+  // // buildChainFixtures(globalCache['./img/mapCollider/boss1.svg'][0], body, 0.02);
+  // let temp1 = new b2Vec2(0, 0);
+  // body.SetTransform(temp1, 0);
+  // console.log(body);
   
   
 }
