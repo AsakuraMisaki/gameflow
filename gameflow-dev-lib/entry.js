@@ -13,6 +13,7 @@
     Dev[name] = any;
   }
 
+  
 
   // dev config
   const isLocal = function(force){
@@ -31,9 +32,14 @@
     return true;
   }
 
+  let _ip = '192.168.31.195';
   const ip = function(force){
     if(isLocal(force)) return './';
-    else return '192.168.31.195';
+    else return _ip;
+  }
+
+  const setIp = (__ip)=>{
+    _ip = __ip;
   }
 
   const port = function(force){
@@ -59,6 +65,7 @@
   exports.ip = ip;
   exports.port = port;
   exports.path = path;
+  exports.setIp = setIp;
   exports.delayRequireJs = delayRequireJs;
   
 

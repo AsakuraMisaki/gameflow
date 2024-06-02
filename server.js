@@ -5,6 +5,23 @@ const WebSocket = require('ws');
 const chokidar = require('chokidar');
 const entry = require('./gameflow-dev-lib/entry');
 
+const os = require('os');
+
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  for (const interfaceName in interfaces) {
+    for (const iface of interfaces[interfaceName]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '0.0.0.0';
+}
+
+console.log('Local IP Address:', getLocalIP());
+entry.setIp(getLocalIP());
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
