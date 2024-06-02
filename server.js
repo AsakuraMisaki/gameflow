@@ -4,6 +4,7 @@ const path = require('path');
 const WebSocket = require('ws');
 const chokidar = require('chokidar');
 const entry = require('./gameflow-dev-lib/entry');
+const serveIndex = require('serve-index');
 
 const os = require('os');
 
@@ -31,6 +32,9 @@ const ip = entry.ip(true);
 
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '')));
+
+// 使用 serve-index 列出 public 目录的内容
+app.use('/', serveIndex(path.join(__dirname, ''), { icons: true }));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '', 'index.html'));

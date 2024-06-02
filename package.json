@@ -36,6 +36,7 @@
 		"opencv-wasm": "^4.3.0-10",
 		"pixijs": "^7.1.4",
 		"poly-partition": "^1.0.2",
+		"serve-index": "^1.9.1",
 		"simplify-js": "^1.2.4",
 		"sobel": "^0.0.11",
 		"superjson": "^2.2.1",
