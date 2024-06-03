@@ -1,6 +1,8 @@
 (function (exports) { 'use strict';
   exports.__name__ = 'gameflowEntry';
 
+  const PIXELS_PER_METER = 100;
+
   let api, worker;
   let canvas, ctx, width, height, canvascolor;
   let pause, step, control, frame = 20, __frame = 20;
@@ -15,6 +17,7 @@
     worker = Comlink.wrap(api);
     exports.worker = worker;
     exports.api = api;
+
   }
 
   const checkWorkerInterface = async function(){
@@ -36,7 +39,7 @@
     }
     ctx = canvas.getContext('2d');
     ctx.fillStyle = '#e3edcd';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
     // ctx.scale(pixelsPerMeter, pixelsPerMeter);
     // canvas.style.transform = 'scale(5,5)';
     ctx.save();
@@ -51,6 +54,7 @@
     div.appendChild(debug);
     if(control) setcontrol();
     document.body.appendChild(div);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     return {canvas, ctx};
   }
 
@@ -109,10 +113,10 @@
     let first = true;
     for (const vertex of vertices) {
       if (first) {
-        ctx.moveTo(vertex.x, vertex.y);
+        ctx.moveTo(vertex.x * PIXELS_PER_METER, vertex.y  * PIXELS_PER_METER);
         first = false;
       } else {
-        ctx.lineTo(vertex.x, vertex.y);
+        ctx.lineTo(vertex.x * PIXELS_PER_METER, vertex.y  * PIXELS_PER_METER);
       }
     }
     ctx.closePath();
@@ -187,6 +191,7 @@
   const _render = ()=>{
     showPerformance();
     requestAnimationFrame(_render);
+    api.postMessage({update:true});
     // if(--frame) return;
     // frame = __frame;
     main();
@@ -207,6 +212,7 @@
         drawPolygon(d.verts, true);
       }
     })
+    
   } 
 
   const onmessage = (msg)=>{
@@ -218,9 +224,6 @@
   const render = function(){
     resetTestbed(...arguments);
     api.addEventListener('message', onmessage);
-    // setInterval(()=>{
-    //   _render();
-    // }, 3000)
     requestAnimationFrame(_render);
   }
 

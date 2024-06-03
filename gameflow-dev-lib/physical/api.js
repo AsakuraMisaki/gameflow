@@ -5,7 +5,7 @@ importScripts('../support/decomp.js');
 importScripts('../support/poly-partition.js');
 importScripts('../support/comlink.js');
 
-console.warn(polyPartition);
+// console.warn(polyPartition);
 
 async function wasmInit(){
   let wasm = await fetch('./Box2D.wasm');
@@ -33,14 +33,22 @@ wasmInit();
 // }
 // wasmInit();
 
+const PIXELS_PER_METER = 100;
+
 const init1 = (box2D) => {
   let pause, frame = 20, __frame = 20;
 
-  let body0;
-
+  let stack = [];
   onmessage = (m) => {
     const data = m.data;
-    if (data.frame){
+    if(data.update){
+      world.Step(1 / 60, 3, 2);
+      world.DebugDraw();
+      world.ClearForces();
+      postMessage({ shape: stack });
+      stack = [];
+    }
+    else if (data.frame){
       __frame = data.frame;
     }
     else if (data.pause) {
@@ -48,13 +56,6 @@ const init1 = (box2D) => {
     }
     else if (data.forwardPoly) {
       createPolyBody(data.forwardPoly);
-    }
-    else if(data.body0){
-      body0 = true;
-      // let body = _Interface.body._force(data.data.cid, 100, 0);
-      // let v = new b2Vec2(10000, 0);
-      // console.log(100);
-      // __body.ApplyForce(v);
     }
   }
 
@@ -97,31 +98,12 @@ const init1 = (box2D) => {
   draw.DrawSolidPolygon = draw.DrawPolygon;
   world.SetDebugDraw(draw);
 
-  function bodyContexter(){ this.init(...arguments) };
-  bodyContexter.prototype.constructor = bodyContexter;
-  bodyContexter.prototype.init = function(body, bd){
-    this.body = body;
-    this.bd = bd;
-  }
-  bodyContexter.prototype.setTransform = function(x, y, rotate=0){
-    const v = new b2Vec2(x, y);
-    this.body.setTransform(v, rotate);
-    destroy(v);
-  }
-  bodyContexter.prototype.getBody = function(){
-    return this.body;
-  }
-  bodyContexter.prototype.destroy = function(){
-    destroy(this.body);
-    destroy(this.bd);
-  }
-
-  const createPolyBody = (verts, dynamic=true, scale=1) => {
+  const createPolyBody = (verts, options={}) => {
     const bd = new b2BodyDef();
-    dynamic ? bd.set_type(b2_dynamicBody) : null;
+    options.dynamic ? bd.set_type(b2_dynamicBody) : null;
     let body = world.CreateBody(bd);
     const convexPolygons = cut(verts);
-    buildTrisFixtures(convexPolygons, body, scale);
+    buildTrisFixtures(convexPolygons, body, options);
     return body;
   }
 
@@ -145,26 +127,7 @@ const init1 = (box2D) => {
     return newConvexPolygons;
   }
 
-  function anyPolygonLite(array) {
-    let verts1 = [];
-    let start = array[0];
-    array.forEach((v) => {
-      verts1.push(v.x - start.x, (v.y - start.y));
-    })
-    verts1.push(verts1[0], verts1[1]);
-    return verts1;
-  }
-  function earcutTris(verts1) {
-    let triangles = earcut(verts1);
-    let verts = [];
-    const edges = getEdges(triangles);
-    const adjacency = buildAdjacency(edges);
-    const mergedPolygons = mergeTriangles(adjacency);
-    console.warn(mergedPolygons);
-    console.warn(`poly number ${verts.length}`);
-    return verts;
-  }
-
+  
 
   function createPolygonShape(vertices, scale = 1) {
     var shape = new b2PolygonShape();
@@ -172,8 +135,8 @@ const init1 = (box2D) => {
     var offset = 0;
     for (var i = 0; i < vertices.length; i++) {
       // console.log(vertices);
-      HEAPF32[buffer + offset >> 2] = vertices[i].x * scale;
-      HEAPF32[buffer + (offset + 4) >> 2] = vertices[i].y * scale;
+      HEAPF32[buffer + offset >> 2] = vertices[i].x * scale / PIXELS_PER_METER;
+      HEAPF32[buffer + (offset + 4) >> 2] = vertices[i].y * scale / PIXELS_PER_METER;
       offset += 8;
     }
     var ptr_wrapped = wrapPointer(buffer, b2Vec2);
@@ -196,73 +159,23 @@ const init1 = (box2D) => {
       shape.CreateChain(ptr_wrapped, vertices.length);
     return shape;
   }
-  function buildTrisFixtures(verts, body, scale = 1, fixture = b2FixtureDef) {
-    console.warn('tri count ' + verts.length)
+  function buildTrisFixtures(verts, body, options={ }, fixture = b2FixtureDef) {
+    console.warn('tri count ' + verts.length);
     verts.forEach((vs, i) => {
       const fixtureDef = new fixture();
       var shape = createPolygonShape(vs, scale);
       const polygonShape = shape;
-      fixtureDef.set_shape(polygonShape);
+      fixtureDef.set_friction(1);
       fixtureDef.set_density(1);
+      fixtureDef.set_shape(polygonShape);
       body.CreateFixture(fixtureDef);
+      options.sensor ? fixtureDef.SetSensor(true) : null;
+      body.SetLinearDamping(options.linerDamping || 10);
+      body.SetFixedRotation(options.fixedRotation || false);
       destroy(fixtureDef);
       destroy(polygonShape);
     })
   }
-
-  /**
-   * @deprecated
-   * @param {any} verts
-   * @param {any} body
-   * @param {any} scale=1
-   * @param {any} fixture=b2FixtureDef
-   * @returns {any}
-   */
-  function buildChainFixtures(verts, body, scale = 1, fixture = b2FixtureDef) {
-    if (!Array.isArray(verts[0])) verts = [verts];
-    verts.forEach((vs) => {
-      const fixtureDef = new fixture();
-      var shape = createChainShape(vs, scale);
-      const polygonShape = shape;
-      fixtureDef.set_shape(polygonShape);
-      fixtureDef.set_density(1);
-      body.CreateFixture(fixtureDef);
-      destroy(fixtureDef);
-      destroy(polygonShape);
-    })
-  }
-
-
-  let stack = [];
-  const _run = ()=>{
-    // requestAnimationFrame(_run);
-    // if(--frame) return;
-    // frame = __frame;
-    main();
-  }
-
-  console.log(world.Step)
-  const main = ()=>{
-    if(body0){
-      __body.ApplyForceToCenter(new b2Vec2(1000000000, 0));
-    }
-    world.Step(1 / 60, 6, 2)
-    world.DebugDraw();
-    // console.log(body.GetPosition().y);
-    // world.ClearForces();
-    postMessage({ shape: stack });
-    stack = [];
-  } 
-
-  const run = ()=>{
-    // [Dangerous] high frequency is [NOT ALLOWED] in some nodejs application 
-    setInterval(()=>{
-      _run();
-    }, 1000 / 60);
-    // requestAnimationFrame(_run);
-  }
-
-  run();
 
   // Interface for main thread
   let id = 0;
@@ -272,64 +185,68 @@ const init1 = (box2D) => {
   const _createCircleBody = function(radius, groupname){
     
   }
-  let __body;
-  const _createPolyBody = function(verts, dynamic=true, scale=1, groupname, data={ }){
-    let body = createPolyBody(verts, dynamic, scale);
+  const _createPolyBody = function(verts, options = { }){
+    let body = createPolyBody(verts, options);
     if(!body) return;
-    // body.SetMassData(0.0001);
-    // body.id = (id++);
-    console.warn(body);
-    if(groupname){
-      _setBodyGroup(groupname, body, data);
+    if(options.groupname){
+      _setBodyGroup(options.groupname, body);
     }
-    _Interface.group.set(id++, { body, data });
-    __body = body;
-    body.SetMassData(1);
+    _Interface.group.set(++id, body);
+    body.id = id;
     return id;
   }
-  const _setBodyGroup = function(groupname, body, data={ }){
+  const _setBodyGroup = function(groupname, body){
     let group = _Interface.group.get(groupname);
     if(!group) return;
-    group.set(body.id, { body, data });
+    group.set(body.id, body);
   }
   const _position = function(id){
-    let data = _Interface.group.get(id);
-    if(!data || !data.body) return;
-    let p = data.body.GetPosition();
+    let body = _Interface.group.get(id);
+    if(!body) return;
+    let p = body.GetPosition();
     const result = { x:p.x, y:p.y };
     destroy(p);
     return result;
   }
   const _force = function(id, x, y){
-    let data = _Interface.group.get(id);
-    if(!data || !data.body) return;
+    let body = _Interface.group.get(id);
+    if(!body) return;
     let v = new b2Vec2(x, y);
-    console.log(v.x);
-    data.body.ApplyForceToCenter(v);
+    // console.log(v.x);
+    body.ApplyForceToCenter(v, true); // 强制唤醒物体
     destroy(v);
   }
-  const _beh = function(id, beh){
-    let data = _Interface.group.get(id);
-    if(!data || !data.body  || !data.body[beh]) return;
-    let args = Array.from(arguments).slice(2, arguments.length);
-    args.splice(0, 1);
-    data.body[beh](...args);
+  const _beh = async function(id, cb){
+    // let data = _Interface.group.get(id);
+    // if(!data || !data.body) return;
+    // console.log(box2D);
+    // cb(data.body, box2D);
   }
   const _setposition = function(id, x, y){
-    let data = _Interface.group.get(id);
-    if(!data || !data.body) return;
-    let temp = new b2Vec2(x, y);
-    data.body.SetTransform(temp, 0);
+    let body = _Interface.group.get(id);
+    if(!body) return;
+    let temp = new b2Vec2(x / PIXELS_PER_METER, y / PIXELS_PER_METER);
+    body.SetTransform(temp, 0);
     destroy(temp);
     return true;
   }
+  const _destory = function(id){
+    let body = _Interface.group.get(id);
+    destroy(body);
+    _Interface.group.delete(id);
+    return id;
+  }
   const printInterface = function(warn = true){
     warn ? console.warn(_Interface) : console.log(_Interface);
+  }
+  const printBodies = function(){
+    console.warn(_Interface.group);
   }
   const _Interface = {
     group: new Map(),
     flags: new Map(),
     printInterface,
+    printBodies,
     context:{
       _createColliderGroup,
       _createPolyBody,
@@ -339,7 +256,8 @@ const init1 = (box2D) => {
       _position,
       _force,
       _beh,
-      _setposition
+      _setposition,
+      _destory
     }
   }
   
@@ -360,18 +278,7 @@ const init1 = (box2D) => {
   
 
 
-  // const bd = new b2BodyDef();
-  // bd.set_type(b2_dynamicBody);
-  // let body = world.CreateBody(bd);
-  // // const convexPolygons = cut(verts);
-  // buildTrisFixtures(globalCache['testtri'], body, scale);
-  // let temp1 = new b2Vec2(0, 0);
-  // body.SetTransform(temp1, 0);
-  
-  // setInterval(()=>{
-  //   console.log(body.GetPosition().y);
-  //   // body.ApplyForceToCenter(10000)
-  // }, 1000/60);
+ 
   
 }
 
