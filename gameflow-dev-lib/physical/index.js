@@ -5,7 +5,7 @@
   let canvas, ctx, width, height, canvascolor;
   let pause, step, control, frame = 20, __frame = 20;
   let debug;
-  const pixelsPerMeter = 1; 
+  const pixelsPerMeter = 100; 
   const cameraOffsetMetres = { x: 0, y: 0 };
   
   let path;
@@ -14,6 +14,7 @@
     api = new Worker(_path + './api.js');
     worker = Comlink.wrap(api);
     exports.worker = worker;
+    exports.api = api;
   }
 
   const checkWorkerInterface = async function(){
@@ -21,11 +22,13 @@
   }
   exports.checkWorkerInterface = checkWorkerInterface;
 
-  const resetTestbed = (_control=true, w=800, h=600, fill=0)=>{
+  const resetTestbed = (_control=true, w=window.innerWidth, h=window.innerHeight, fill=0)=>{
     debug = document.createElement('p');
     debug.style.cssText = 'background:greenyellow;right: 50%; top: 0px; color:black;position:absolute;';
     let div = document.createElement('div');
     div.style.cssText = `left: 0px; top: 0px;z-index:999;position:absolute;`;
+    // div.style.width = window.innerWidth + 'px';
+    // div.style.height = window.innerHeight + 'px';
     canvas = document.getElementById("demo-canvas");
     if(!canvas){
       canvas = document.createElement('canvas');
@@ -34,11 +37,12 @@
     ctx = canvas.getContext('2d');
     ctx.fillStyle = '#e3edcd';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // ctx.scale(pixelsPerMeter, pixelsPerMeter);
+    // canvas.style.transform = 'scale(5,5)';
     ctx.save();
-    ctx.scale(pixelsPerMeter, pixelsPerMeter);
     const { x, y } = cameraOffsetMetres;
     ctx.translate(x, y);
-    ctx.lineWidth /= pixelsPerMeter;
+    // ctx.lineWidth /= pixelsPerMeter;
     ctx.strokeStyle = '#ffffff';
     ctx.fillStyle = '#ffffff';
     control = _control;

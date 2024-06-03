@@ -58,7 +58,7 @@
     ]
     Gameflow.DevRegister('physical', physical);
     physical.render();
-    physical.terrain(0.2);
+    // physical.terrain(0.2);
 
     console.log('requirejs work');
   };
