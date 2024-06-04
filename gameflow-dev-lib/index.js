@@ -43,14 +43,20 @@
     let config = await Gameflow.require('config');
     console.log(config);
 
-    let physical = await Gameflow.require('physical/index', path + './gameflow-dev-lib/physical/', path);
-    console.warn(physical.worker);
-    
-    Gameflow.DevRegister('physical', physical);
-    physical.render();
+    // [physical]
+    // let physical = await Gameflow.require('physical/index', path + './gameflow-dev-lib/physical/', path);
+    // console.warn(physical.worker);
+    // Gameflow.DevRegister('physical', physical);
+    // physical.render();
+    // physical.terrain(0.2);
+
+    let displayobject = await Gameflow.require('displayobject/index');
+    console.log(displayobject);
+
+
 
     window.dispatchEvent(new CustomEvent('gameflowstart'));
-    // physical.terrain(0.2);
+    
 
     // let verts = [
     //   { x: 9.876 + 20, y: 1.234 + 20 },

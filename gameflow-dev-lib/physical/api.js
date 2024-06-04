@@ -36,12 +36,12 @@ wasmInit();
 const PIXELS_PER_METER = 100;
 
 const init1 = (box2D) => {
-  let pause, frame = 20, __frame = 20;
+  let pause;
 
   let stack = [];
   onmessage = (m) => {
     const data = m.data;
-    if(data.update){
+    if(data.update && !pause){
       world.Step(1 / 60, 3, 2);
       world.DebugDraw();
       world.ClearForces();

@@ -39,8 +39,10 @@
 		"serve-index": "^1.9.1",
 		"simplify-js": "^1.2.4",
 		"sobel": "^0.0.11",
+		"stretch-layout": "^0.3.2",
 		"superjson": "^2.2.1",
 		"vite-plugin-wasm": "^3.3.0",
-		"ws": "^8.17.0"
+		"ws": "^8.17.0",
+		"yoga-layout": "^3.0.4"
 	}
 }

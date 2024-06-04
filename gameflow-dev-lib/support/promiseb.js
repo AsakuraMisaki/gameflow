@@ -1,6 +1,6 @@
 (function (exports) { 'use strict';
   exports.__name__ = 'promiseb';
-
+  
   function newPromise(){
     let _ = { };
     let promise = new Promise((resolve, reject) => {

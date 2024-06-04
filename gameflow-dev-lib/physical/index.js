@@ -1,5 +1,5 @@
 (function (exports) { 'use strict';
-  exports.__name__ = 'gameflowEntry';
+  exports.__name__ = 'physical';
 
   const PIXELS_PER_METER = 100;
 

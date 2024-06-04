@@ -52,6 +52,11 @@
     else return `http://${ip(force)}:${port(force)}/`;
   }
 
+  let _config = { };
+  const config = function(){
+    return _config;
+  }
+
   function delayRequireJs(){
     let script = document.createElement('script');
     script.src = `${path()}./gameflow-dev-lib/require.js`;
