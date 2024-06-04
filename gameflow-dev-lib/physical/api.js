@@ -1,9 +1,3 @@
-// importScripts('./Box2D.js');
-// importScripts('../other/globalCache.js');
-// importScripts('../support/earcut.js');
-// importScripts('../support/poly-partition.js');
-// importScripts('../support/comlink.js');
-
 import * as Box2D from './Box2D.js';
 import * as globalCache from '../other/globalCache.js';
 import * as earcut from '../support/earcut.js';
@@ -58,9 +52,6 @@ const init1 = (box2D) => {
     }
     else if (data.pause) {
       pause = data.pause;
-    }
-    else if (data.forwardPoly) {
-      createPolyBody(data.forwardPoly);
     }
   }
 

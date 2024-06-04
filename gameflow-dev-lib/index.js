@@ -1,13 +1,10 @@
 import * as Gameflow from './entry.js';
-
-
-
-
+Gameflow.global.Gameflow = Gameflow;
 
 // import * as Physical from './physical/index.js';
 // Gameflow.DevRegister('physical', Physical);
 // Physical.render();
-// Gameflow.global.Gameflow = Gameflow;
+
 
 import * as Display from './displayobject/index.js';
 

@@ -18,8 +18,7 @@ const worker = Comlink.wrap(api);
 const checkWorkerInterface = async function () {
   await worker.printInterface();
 }
-export {checkWorkerInterface};
-export {worker};
+export { checkWorkerInterface, worker };
 
 const resetTestbed = (_control = true, w = window.innerWidth, h = window.innerHeight, fill = 0) => {
   debug = document.createElement('p');
@@ -275,7 +274,7 @@ let speed = 5;
 let terrainhandle = function () {
   if (!contours.length && contoursCopy.length) {
     console.log(contoursCopy);
-    api.postMessage({ forwardPoly: contoursCopy });
+    worker.context._createPolyBody(contoursCopy);
     contoursCopy = [];
     requestAnimationFrame(terrainhandle);
     return;
