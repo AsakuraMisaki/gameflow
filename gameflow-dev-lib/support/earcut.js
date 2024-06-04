@@ -1,8 +1,3 @@
-'use strict';
-
-// module.exports = earcut;
-// module.exports.default = earcut;
-
 function earcut(data, holeIndices, dim) {
 
     dim = dim || 2;
@@ -679,3 +674,5 @@ earcut.flatten = function (data) {
     }
     return result;
 };
+
+export { earcut };

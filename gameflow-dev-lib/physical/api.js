@@ -1,18 +1,23 @@
-importScripts('./Box2D.js');
-importScripts('../other/globalCache.js');
-importScripts('../support/earcut.js');
-importScripts('../support/decomp.js');
-importScripts('../support/poly-partition.js');
-importScripts('../support/comlink.js');
+// importScripts('./Box2D.js');
+// importScripts('../other/globalCache.js');
+// importScripts('../support/earcut.js');
+// importScripts('../support/poly-partition.js');
+// importScripts('../support/comlink.js');
 
-// console.warn(polyPartition);
+import * as Box2D from './Box2D.js';
+import * as globalCache from '../other/globalCache.js';
+import * as earcut from '../support/earcut.js';
+import * as polyPartition from '../support/poly-partition.js';
+import * as Comlink from '../support/comlink.mjs';
+
+console.warn(Box2D);
 
 async function wasmInit(){
   let wasm = await fetch('./Box2D.wasm');
 
   const bytes = await wasm.arrayBuffer();
 
-  const context = await Box2D();
+  const context = await Box2D.Box2D();
 
   const instance = await WebAssembly.instantiate(bytes, context.im);
 
@@ -87,7 +92,7 @@ const init1 = (box2D) => {
 
   draw.DrawPolygon = function (vertices, vertexCount, fill) {
     let verts = [];
-    for (tmpI = 0; tmpI < vertexCount; tmpI++) {
+    for (let tmpI = 0; tmpI < vertexCount; tmpI++) {
       var vert = wrapPointer(vertices + (tmpI * 8), b2Vec2);
       verts.push({ x: vert.get_x(), y: vert.get_y() })
     }
@@ -163,7 +168,7 @@ const init1 = (box2D) => {
     console.warn('tri count ' + verts.length);
     verts.forEach((vs, i) => {
       const fixtureDef = new fixture();
-      var shape = createPolygonShape(vs, scale);
+      var shape = createPolygonShape(vs);
       const polygonShape = shape;
       fixtureDef.set_friction(1);
       fixtureDef.set_density(1);
@@ -275,10 +280,5 @@ const init1 = (box2D) => {
   // body.SetTransform(temp1, 0);
   
   // console.log(body);
-  
-
-
- 
-  
 }
 

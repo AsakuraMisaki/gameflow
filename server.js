@@ -3,7 +3,7 @@ const http = require('http');
 const path = require('path');
 const WebSocket = require('ws');
 const chokidar = require('chokidar');
-const entry = require('./gameflow-dev-lib/entry');
+// const entry = require('./gameflow-dev-lib/entry');
 const serveIndex = require('serve-index');
 
 const os = require('os');
@@ -20,15 +20,15 @@ function getLocalIP() {
   return '0.0.0.0';
 }
 
-console.log('Local IP Address:', getLocalIP());
-entry.setIp(getLocalIP());
+// console.log('Local IP Address:', getLocalIP());
+// entry.setIp(getLocalIP());
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const port = entry.port(true);
-const ip = entry.ip(true);
+const port = '192.168.31.195';
+const ip = 5173;
 
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '')));

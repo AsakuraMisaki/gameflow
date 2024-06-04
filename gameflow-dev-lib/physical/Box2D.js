@@ -13680,11 +13680,14 @@ var Box2D = (function () {
         return Box2D.ready;
     });
 })();
-if (typeof exports === 'object' && typeof module === 'object') 
-    module.exports = Box2D;
-else if (typeof define === 'function' && define['amd']) 
-    define([], function () {
-        return Box2D;
-    });
-else if (typeof exports === 'object') 
-    exports["Box2D"] = Box2D;
+
+export { Box2D };
+export default Box2D;
+// if (typeof exports === 'object' && typeof module === 'object') 
+//     module.exports = Box2D;
+// else if (typeof define === 'function' && define['amd']) 
+//     define([], function () {
+//         return Box2D;
+//     });
+// else if (typeof exports === 'object') 
+//     exports["Box2D"] = Box2D;

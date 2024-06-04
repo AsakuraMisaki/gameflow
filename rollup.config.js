@@ -3,11 +3,11 @@ import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
 
 export default {
-  input: 'src/main.js',
+  input: 'gameflow-dev-lib/support/simplify.js',
   output: {
     file: 'public/bundle.js',
-    format: 'umd',
-    name: 'SvelteBuiltIn' // 这里替换为你的库名称
+    format: 'esm',
+    // name: 'SvelteBuiltIn' // 这里替换为你的库名称
   },
   plugins: [
     svelte({
