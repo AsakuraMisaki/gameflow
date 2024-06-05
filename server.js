@@ -27,8 +27,8 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const port = '192.168.31.195';
-const ip = 5173;
+const port = 5173;
+const ip = '192.168.31.195';
 
 // 提供静态文件服务
 app.use(express.static(path.join(__dirname, '')));

@@ -37,25 +37,9 @@ const PIXELS_PER_METER = 100;
 const init1 = (box2D) => {
   let pause;
 
-  let stack = [];
-  onmessage = (m) => {
-    const data = m.data;
-    if(data.update && !pause){
-      world.Step(1 / 60, 3, 2);
-      world.DebugDraw();
-      world.ClearForces();
-      postMessage({ shape: stack });
-      stack = [];
-    }
-    else if (data.frame){
-      __frame = data.frame;
-    }
-    else if (data.pause) {
-      pause = data.pause;
-    }
-  }
+  let stack = [], concat = {}, contactcache={};
 
-  const { HEAPF32, _malloc, b2PolygonShape, b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color, destroy } = box2D;
+  const { b2CircleShape, b2Contact, b2Filter, JSContactListener, HEAPF32, _malloc, b2PolygonShape, b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color, destroy } = box2D;
 
   const gravity = new b2Vec2(0.0, 0.0);
   const world = new b2World(gravity);
@@ -73,7 +57,7 @@ const init1 = (box2D) => {
     })
   };
 
-  draw.DrawCircle = function (center, radius, axis, fill) {
+  draw.DrawSolidCircle = draw.DrawCircle = function (center, radius, axis, fill) {
     var centerV = wrapPointer(center, b2Vec2);
     var axisV = wrapPointer(axis, b2Vec2);
     stack.push({
@@ -158,16 +142,21 @@ const init1 = (box2D) => {
   function buildTrisFixtures(verts, body, options={ }, fixture = b2FixtureDef) {
     console.warn('tri count ' + verts.length);
     verts.forEach((vs, i) => {
+      const filter = new b2Filter();
+      console.warn(options);
+      filter.set_categoryBits(options.category || 1);
+      filter.set_maskBits(options.mask || (1 | 1));
       const fixtureDef = new fixture();
       var shape = createPolygonShape(vs);
       const polygonShape = shape;
       fixtureDef.set_friction(1);
       fixtureDef.set_density(1);
       fixtureDef.set_shape(polygonShape);
-      body.CreateFixture(fixtureDef);
-      options.sensor ? fixtureDef.SetSensor(true) : null;
+      options.sensor ? fixtureDef.set_isSensor(true) : null;
+      fixtureDef.set_filter(filter);
       body.SetLinearDamping(options.linerDamping || 10);
       body.SetFixedRotation(options.fixedRotation || false);
+      body.CreateFixture(fixtureDef);
       destroy(fixtureDef);
       destroy(polygonShape);
     })
@@ -178,15 +167,64 @@ const init1 = (box2D) => {
   const _createColliderGroup = function(name){
     _Interface.group.set(name, new Map());
   }
-  const _createCircleBody = function(radius, groupname){
-    
+  const _createCircleBody = function(radius, options={ }, fixture=b2FixtureDef){
+    const filter = new b2Filter();
+    // console.warn(options);
+    filter.set_categoryBits(options.category || 1);
+    filter.set_maskBits(options.mask || (1 | 1));
+    const fixtureDef = new fixture();
+    const shape = new b2CircleShape();
+    shape.set_m_radius(radius / PIXELS_PER_METER);
+    fixtureDef.set_friction(1);
+    fixtureDef.set_density(1);
+    fixtureDef.set_shape(shape);
+    options.sensor ? fixtureDef.set_isSensor(true) : null;
+    fixtureDef.set_filter(filter);
+    const bd = new b2BodyDef();
+    options.dynamic ? bd.set_type(b2_dynamicBody) : null;
+    let body = world.CreateBody(bd);
+    body.SetLinearDamping(options.linerDamping || 10);
+    body.SetFixedRotation(options.fixedRotation || false);
+    body.CreateFixture(fixtureDef);
+    destroy(bd);
+    destroy(fixtureDef);
+    destroy(shape);
+    _Interface.group.set(++id, body);
+    body.id = id;
+    return id;
+  }
+  const _createRectBody = function(w, h, options={ }, fixture=b2FixtureDef){
+    const filter = new b2Filter();
+    // console.warn(options);
+    filter.set_categoryBits(options.category || 1);
+    filter.set_maskBits(options.mask || (1 | 1));
+    const fixtureDef = new fixture();
+    const shape = new b2PolygonShape();
+    shape.SetAsBox(w / PIXELS_PER_METER, h / PIXELS_PER_METER);
+    fixtureDef.set_friction(1);
+    fixtureDef.set_density(1);
+    fixtureDef.set_shape(shape);
+    options.sensor ? fixtureDef.set_isSensor(true) : null;
+    fixtureDef.set_filter(filter);
+    const bd = new b2BodyDef();
+    options.dynamic ? bd.set_type(b2_dynamicBody) : null;
+    let body = world.CreateBody(bd);
+    body.SetLinearDamping(options.linerDamping || 10);
+    body.SetFixedRotation(options.fixedRotation || false);
+    body.CreateFixture(fixtureDef);
+    destroy(bd);
+    destroy(fixtureDef);
+    destroy(shape);
+    _Interface.group.set(++id, body);
+    body.id = id;
+    return id;
   }
   const _createPolyBody = function(verts, options = { }){
     let body = createPolyBody(verts, options);
     if(!body) return;
-    if(options.groupname){
-      _setBodyGroup(options.groupname, body);
-    }
+    // if(options.groupname){
+    //   _setBodyGroup(options.groupname, body);
+    // }
     _Interface.group.set(++id, body);
     body.id = id;
     return id;
@@ -218,6 +256,33 @@ const init1 = (box2D) => {
     // console.log(box2D);
     // cb(data.body, box2D);
   }
+  const _synclite = async function(id, id1, ox=0, oy=0, rotate=false){
+    let b1 = _Interface.group.get(id);
+    let b2 = _Interface.group.get(id1);
+    if(!b1 || !b2) return;
+    let a = b1.GetAngle();
+    const temp = b2.GetPosition();
+    const temp1 = new b2Vec2(temp.x + ox, temp.y + oy);
+    if(rotate){
+      a = b2.GetAngle();
+    }
+    b1.SetTransform(temp1, a);
+    destroy(temp);
+    destroy(temp1);
+    return true;
+  }
+  const _syncfront = async function(id, id1, radian=0, ox=0, oy=0, rotate=false){
+    let b1 = _Interface.group.get(id);
+    let b2 = _Interface.group.get(id1);
+    if(!b1 || !b2) return;
+    let a = b1.GetAngle();
+    const temp = b2.GetPosition();
+    if(rotate){
+      a = b2.GetAngle();
+    }
+    b1.SetTransform(temp, a);
+    destroy(temp);
+  }
   const _setposition = function(id, x, y){
     let body = _Interface.group.get(id);
     if(!body) return;
@@ -228,9 +293,51 @@ const init1 = (box2D) => {
   }
   const _destory = function(id){
     let body = _Interface.group.get(id);
+    world.DestroyBody(body);
     destroy(body);
     _Interface.group.delete(id);
     return id;
+  }
+  let contact = { };
+  const _getContact = function(id, cache = false){
+    let c = cache ? contactcache : contact;
+    if(!id){
+      return c;
+    }
+    return c[id];
+  }
+  const _addContactL = function(id){
+    contact[id] = contact[id] || { };
+  }
+  const _removeContactL = function(id){
+    delete contact[id];
+  }
+  const _createContactListener = ()=>{
+    const listener = new JSContactListener();
+    listener.BeginContact = function(c) {
+      const contact1 = wrapPointer(c, b2Contact);
+      console.log(contact1);
+      const b1 = contact1.GetFixtureA().GetBody();
+      const b2 = contact1.GetFixtureB().GetBody();
+      if(contact1[b1.id] == undefined && contact1[b2.id] == undefined) return;
+      contact[b1.id][b2.id] = true;
+      contact[b2.id][b1.id] = true;
+    };
+    listener.EndContact = function(c) {
+      // let contact = wrapPointer(c, b2Contact);
+      // console.log(contact);
+      // var fixtureA = contact.GetFixtureA().GetBody();
+      // var fixtureB = contact.GetFixtureB().GetBody();
+      // console.log(fixtureA, fixtureB, '1');
+    };
+    listener.PreSolve = function(contact) {
+      
+    };
+    listener.PostSolve = function(contact) {
+
+    };
+    world.SetContactListener(listener);
+    destroy(listener);
   }
   const printInterface = function(warn = true){
     warn ? console.warn(_Interface) : console.log(_Interface);
@@ -246,17 +353,59 @@ const init1 = (box2D) => {
     context:{
       _createColliderGroup,
       _createPolyBody,
+      _createRectBody,
+      _createCircleBody,
       _setBodyGroup,
+      _createContactListener,
+      _getContact,
     },
     body:{
       _position,
       _force,
       _beh,
       _setposition,
-      _destory
+      _destory,
+      _addContactL,
+      _removeContactL,
+      _synclite,
+      _syncfront
     }
   }
   
+  
+
+  onmessage = (m) => {
+    const data = m.data;
+    if(data.update && !pause){
+      world.Step(1 / 60, 3, 2);
+      world.DebugDraw();
+      world.ClearForces();
+      lastInfoPost();
+      postMessage({ shape: stack, allBodies, contact });
+      stack = [];
+      // contactcache = Object.assign({ }, concat);
+      // concat = { };
+      // console.log(contactcache);
+    }
+    else if (data.frame){
+      __frame = data.frame;
+    }
+    else if (data.pause) {
+      pause = data.pause;
+    }
+  }
+  let allBodies = { };
+  const lastInfoPost = ()=>{
+    allBodies = { };
+    _Interface.group.forEach((body, i)=>{
+      const pos =  body.GetPosition();
+      const {x, y} = pos;
+      destroy(pos);
+      let rotation = body.GetAngle();
+      allBodies[i] = { position:{x, y}, rotation };
+    })
+  }
+  // _createContactListener();
   
 
   Comlink.expose(_Interface);

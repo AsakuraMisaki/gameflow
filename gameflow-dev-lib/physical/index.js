@@ -15,16 +15,25 @@ const api = new Worker(Gameflow.path() + './gameflow-dev-lib/physical/api.js', {
 const worker = Comlink.wrap(api);
 
 
+
+let _1 = { };
+
+
 const checkWorkerInterface = async function () {
   await worker.printInterface();
 }
-export { checkWorkerInterface, worker };
+Object.defineProperties(_1, {
+  i: {
+    get: checkWorkerInterface
+  }
+})
+export { worker, _1 };
 
 const resetTestbed = (_control = true, w = window.innerWidth, h = window.innerHeight, fill = 0) => {
   debug = document.createElement('p');
   debug.style.cssText = 'background:greenyellow;right: 50%; top: 0px; color:black;position:absolute;';
   let div = document.createElement('div');
-  div.style.cssText = `left: 0px; top: 0px;z-index:999;position:absolute;`;
+  div.style.cssText = `opacity:0.6;left: 0px; top: 0px;z-index:999; position:absolute;`;
   // div.style.width = window.innerWidth + 'px';
   // div.style.height = window.innerHeight + 'px';
   canvas = document.getElementById("demo-canvas");
@@ -59,7 +68,7 @@ const setFrame = (f) => {
 
 const setcontrol = (w, h) => {
   const div = document.createElement('div');
-  div.style.cssText = 'opacity:1; font-size:16px; opacity:0.6; width:100%;position:absolute;top:0px;';
+  div.style.cssText = 'opacity:1; font-size:16px; width:100%;position:absolute;top:0px;';
   const step = document.createElement('button');
   step.innerText = 'S';
   const play = document.createElement('button');
@@ -123,7 +132,7 @@ const drawPolygon = (vertices, fill) => {
 
 const drawCircle = (center, radius, axis, fill) => {
   ctx.beginPath();
-  ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI, false);
+  ctx.arc(center.x * PIXELS_PER_METER, center.y * PIXELS_PER_METER, radius * PIXELS_PER_METER, 0, 2 * Math.PI, false);
   if (fill) {
     ctx.fillStyle = '#ffffff';
     ctx.fill();
@@ -182,7 +191,7 @@ const showPerformance = () => {
   now0 = now;
 }
 
-let stack = [];
+
 const _render = () => {
   showPerformance();
   requestAnimationFrame(_render);
@@ -209,11 +218,15 @@ const main = () => {
   })
 
 }
-
-const onmessage = (msg) => {
+let stack = [];
+let allBodies = { };
+let contact = { };
+onmessage = (msg) => {
   if (msg.data.shape) {
     stack = msg.data.shape;
   }
+  allBodies =  msg.data.allBodies || allBodies;
+  contact = msg.data.contact  || contact;
 }
 
 const render = function () {
@@ -294,4 +307,4 @@ let terrainhandle = function () {
 
 setFrame(1);
 
-export { render, resize, setFrame, terrain };
+export { render, resize, setFrame, terrain, allBodies, contact };
