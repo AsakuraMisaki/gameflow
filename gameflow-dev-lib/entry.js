@@ -2,8 +2,8 @@ const global = typeof (window) != 'undefined' ? window : typeof (self) != 'undef
 typeof (globalThis) != 'undefined' ? globalThis : typeof (global) != 'undefined' ? global : null;
 
 let Dev = {};
-const DevRegister = function (name, any) {
-  Dev[name] = any;
+const register = function (name, any) {
+  exports[name] = any;
 }
 
 // dev config
@@ -48,4 +48,7 @@ const config = function () {
   return _config;
 }
 
-export { Dev, DevRegister, ip, port, path, setIp, config, global };
+let exports = { };
+Object.assign(exports, {Dev, register, ip, port, path, setIp, config, global});
+
+export default exports;

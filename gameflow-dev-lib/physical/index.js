@@ -1,5 +1,5 @@
 import * as Comlink from '../support/comlink.mjs';
-import * as Gameflow from '../entry.js';
+import { default as Gameflow } from '../entry.js';
 
 console.warn(Gameflow.path());
 

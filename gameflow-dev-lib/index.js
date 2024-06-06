@@ -1,8 +1,8 @@
-import * as Gameflow from './entry.js';
+import { default as Gameflow } from './entry.js';
 Gameflow.global.Gameflow = Gameflow;
 
 import * as Physical from './physical/index.js';
-Gameflow.DevRegister('physical', Physical);
+Gameflow.register('physical', Physical);
 
 Physical.render();
 

@@ -39,8 +39,12 @@ const init1 = (box2D) => {
 
   let stack = [], concat = {}, contactcache={};
 
-  const { b2CircleShape, b2Contact, b2Filter, JSContactListener, HEAPF32, _malloc, b2PolygonShape, b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color, destroy } = box2D;
+  const { getPointer, NULL, LeakMitigator, b2CircleShape, b2Contact, b2Filter, JSContactListener, HEAPF32, _malloc, b2PolygonShape, b2Vec2, b2BodyDef, b2World, b2FixtureDef, b2_dynamicBody, JSDraw, b2Draw, wrapPointer, b2Color, destroy } = box2D;
+  
+  const { freeLeaked, recordLeak } = new LeakMitigator();
 
+  const { freeFromCache } = LeakMitigator;
+  
   const gravity = new b2Vec2(0.0, 0.0);
   const world = new b2World(gravity);
   const draw = new JSDraw();
@@ -84,6 +88,8 @@ const init1 = (box2D) => {
     let body = world.CreateBody(bd);
     const convexPolygons = cut(verts);
     buildTrisFixtures(convexPolygons, body, options);
+    destroy(bd);
+    // destroy(convexPolygons);
     return body;
   }
 
@@ -159,6 +165,7 @@ const init1 = (box2D) => {
       body.CreateFixture(fixtureDef);
       destroy(fixtureDef);
       destroy(polygonShape);
+      destroy(filter);
     })
   }
 
@@ -183,14 +190,19 @@ const init1 = (box2D) => {
     const bd = new b2BodyDef();
     options.dynamic ? bd.set_type(b2_dynamicBody) : null;
     let body = world.CreateBody(bd);
-    body.SetLinearDamping(options.linerDamping || 10);
+    body.SetLinearDamping(options.ld || 10);
     body.SetFixedRotation(options.fixedRotation || false);
     body.CreateFixture(fixtureDef);
     destroy(bd);
     destroy(fixtureDef);
     destroy(shape);
+    destroy(filter);
     _Interface.group.set(++id, body);
+    if(!body){
+      console.warn(id, ' no body ? ');
+    }
     body.id = id;
+    options.sensor ? body.SetSleepingAllowed(false) : null;
     return id;
   }
   const _createRectBody = function(w, h, options={ }, fixture=b2FixtureDef){
@@ -215,8 +227,10 @@ const init1 = (box2D) => {
     destroy(bd);
     destroy(fixtureDef);
     destroy(shape);
+    destroy(filter);
     _Interface.group.set(++id, body);
     body.id = id;
+    options.sensor ? body.SetSleepingAllowed(false) : null;
     return id;
   }
   const _createPolyBody = function(verts, options = { }){
@@ -291,10 +305,19 @@ const init1 = (box2D) => {
     destroy(temp);
     return true;
   }
+  const _setangle = async function(id, rotation){
+    let body = _Interface.group.get(id);
+    if(!body) return;
+    let temp = body.GetPosition();
+    body.SetTransform(temp, rotation);
+    destroy(temp);
+    return true;
+  }
   const _destory = function(id){
     let body = _Interface.group.get(id);
-    world.DestroyBody(body);
-    destroy(body);
+    if(!body) return;
+    _Interface.gc.set(body, true);
+    _removeContactL(id);
     _Interface.group.delete(id);
     return id;
   }
@@ -307,6 +330,9 @@ const init1 = (box2D) => {
     return c[id];
   }
   const _addContactL = function(id){
+    let body = _Interface.group.get(id);
+    if(!body) return;
+    body.SetSleepingAllowed(false);
     contact[id] = contact[id] || { };
   }
   const _removeContactL = function(id){
@@ -314,30 +340,35 @@ const init1 = (box2D) => {
   }
   const _createContactListener = ()=>{
     const listener = new JSContactListener();
+    
     listener.BeginContact = function(c) {
       const contact1 = wrapPointer(c, b2Contact);
-      console.log(contact1);
       const b1 = contact1.GetFixtureA().GetBody();
       const b2 = contact1.GetFixtureB().GetBody();
-      if(contact1[b1.id] == undefined && contact1[b2.id] == undefined) return;
-      contact[b1.id][b2.id] = true;
-      contact[b2.id][b1.id] = true;
+      let a = contact[b1.id];
+      let b = contact[b2.id];
+      if(!a && !b) return;
+      a ? a[b2.id] = true : null;
+      b ? b[b1.id] = true : null;
     };
     listener.EndContact = function(c) {
-      // let contact = wrapPointer(c, b2Contact);
-      // console.log(contact);
-      // var fixtureA = contact.GetFixtureA().GetBody();
-      // var fixtureB = contact.GetFixtureB().GetBody();
-      // console.log(fixtureA, fixtureB, '1');
+      const contact1 = wrapPointer(c, b2Contact);
+      const b1 = contact1.GetFixtureA().GetBody();
+      const b2 = contact1.GetFixtureB().GetBody();
+      let a = contact[b1.id];
+      let b = contact[b2.id];
+      if(!a && !b) return;
+      a ? delete a[b2.id] : null;
+      b ? delete b[b1.id] : null;
     };
-    listener.PreSolve = function(contact) {
+    listener.PreSolve = function(c) {
       
     };
-    listener.PostSolve = function(contact) {
-
+    listener.PostSolve = function(c) {
+      
     };
     world.SetContactListener(listener);
-    destroy(listener);
+    // destroy(listener);
   }
   const printInterface = function(warn = true){
     warn ? console.warn(_Interface) : console.log(_Interface);
@@ -348,6 +379,7 @@ const init1 = (box2D) => {
   const _Interface = {
     group: new Map(),
     flags: new Map(),
+    gc: new Map(),
     printInterface,
     printBodies,
     context:{
@@ -368,21 +400,39 @@ const init1 = (box2D) => {
       _addContactL,
       _removeContactL,
       _synclite,
-      _syncfront
+      _syncfront,
+      _setangle
     }
   }
-  
+  _createContactListener();
   
 
   onmessage = (m) => {
     const data = m.data;
     if(data.update && !pause){
+      _Interface.gc.forEach((_, body, map)=>{
+        world.DestroyBody(body);
+        freeFromCache(body);
+      })
+      _Interface.gc = new Map();
       world.Step(1 / 60, 3, 2);
+      // for (
+      //   let body = recordLeak(world.GetBodyList());
+      //   getPointer(body) !== getPointer(NULL);
+      //   body = recordLeak(body.GetNext())
+      //   ) {
+      //     if(_Interface.gc.get(body)){
+      //       world.DestroyBody(body);
+      //       _Interface.gc.delete(body);
+      //     }
+          
+      // }
       world.DebugDraw();
       world.ClearForces();
       lastInfoPost();
       postMessage({ shape: stack, allBodies, contact });
       stack = [];
+      // freeLeaked();
       // contactcache = Object.assign({ }, concat);
       // concat = { };
       // console.log(contactcache);
@@ -398,7 +448,7 @@ const init1 = (box2D) => {
   const lastInfoPost = ()=>{
     allBodies = { };
     _Interface.group.forEach((body, i)=>{
-      const pos =  body.GetPosition();
+      const pos = body.GetPosition();
       const {x, y} = pos;
       destroy(pos);
       let rotation = body.GetAngle();
@@ -407,7 +457,7 @@ const init1 = (box2D) => {
   }
   // _createContactListener();
   
-
+  world.SetAllowSleeping(false);
   Comlink.expose(_Interface);
   
   // let scale = 0.5;
