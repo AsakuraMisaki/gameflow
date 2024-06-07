@@ -44,6 +44,8 @@ const init1 = (box2D) => {
   const { freeLeaked, recordLeak } = new LeakMitigator();
 
   const { freeFromCache } = LeakMitigator;
+
+  
   
   const gravity = new b2Vec2(0.0, 0.0);
   const world = new b2World(gravity);
@@ -240,6 +242,7 @@ const init1 = (box2D) => {
     //   _setBodyGroup(options.groupname, body);
     // }
     _Interface.group.set(++id, body);
+    
     body.id = id;
     return id;
   }
@@ -253,7 +256,7 @@ const init1 = (box2D) => {
     if(!body) return;
     let p = body.GetPosition();
     const result = { x:p.x, y:p.y };
-    destroy(p);
+    // destroy(p);
     return result;
   }
   const _force = function(id, x, y){
@@ -281,7 +284,7 @@ const init1 = (box2D) => {
       a = b2.GetAngle();
     }
     b1.SetTransform(temp1, a);
-    destroy(temp);
+    // destroy(temp);
     destroy(temp1);
     return true;
   }
@@ -295,7 +298,7 @@ const init1 = (box2D) => {
       a = b2.GetAngle();
     }
     b1.SetTransform(temp, a);
-    destroy(temp);
+    // destroy(temp);
   }
   const _setposition = function(id, x, y){
     let body = _Interface.group.get(id);
@@ -310,7 +313,7 @@ const init1 = (box2D) => {
     if(!body) return;
     let temp = body.GetPosition();
     body.SetTransform(temp, rotation);
-    destroy(temp);
+    // destroy(temp);
     return true;
   }
   const _destory = function(id){
@@ -416,20 +419,25 @@ const init1 = (box2D) => {
       })
       _Interface.gc = new Map();
       world.Step(1 / 60, 3, 2);
-      // for (
-      //   let body = recordLeak(world.GetBodyList());
-      //   getPointer(body) !== getPointer(NULL);
-      //   body = recordLeak(body.GetNext())
-      //   ) {
-      //     if(_Interface.gc.get(body)){
-      //       world.DestroyBody(body);
-      //       _Interface.gc.delete(body);
-      //     }
-          
-      // }
-      world.DebugDraw();
+      for (
+        let body = recordLeak(world.GetBodyList());
+        getPointer(body) !== getPointer(NULL);
+        body = recordLeak(body.GetNext())
+        ) {
+          // if(_Interface.gc.get(body)){
+          //   world.DestroyBody(body);
+          //   _Interface.gc.delete(body);
+          // }
+        if(!body.id) continue;
+        const pos = body.GetPosition();
+        const {x, y} = pos;
+        let rotation = body.GetAngle();
+        allBodies[body.id] = { position:{x, y}, rotation };
+        // destroy(pos);
+      }
+      // world.DebugDraw();
       world.ClearForces();
-      lastInfoPost();
+      // lastInfoPost();
       postMessage({ shape: stack, allBodies, contact });
       stack = [];
       // freeLeaked();
@@ -450,7 +458,7 @@ const init1 = (box2D) => {
     _Interface.group.forEach((body, i)=>{
       const pos = body.GetPosition();
       const {x, y} = pos;
-      destroy(pos);
+      // destroy(pos);
       let rotation = body.GetAngle();
       allBodies[i] = { position:{x, y}, rotation };
     })

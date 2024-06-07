@@ -10,6 +10,7 @@ let pause, step, control, frame = 20, __frame = 20;
 let debug;
 const pixelsPerMeter = 100;
 const cameraOffsetMetres = { x: 0, y: 0 };
+let DrawOffset = { x:0, y:0 };
 
 const api = new Worker(Gameflow.path() + './gameflow-dev-lib/physical/api.js', { type:'module' });
 const worker = Comlink.wrap(api);
@@ -117,10 +118,10 @@ const drawPolygon = (vertices, fill) => {
   let first = true;
   for (const vertex of vertices) {
     if (first) {
-      ctx.moveTo(vertex.x * PIXELS_PER_METER, vertex.y * PIXELS_PER_METER);
+      ctx.moveTo((vertex.x + DrawOffset.x) * PIXELS_PER_METER, (vertex.y + DrawOffset.y) * PIXELS_PER_METER);
       first = false;
     } else {
-      ctx.lineTo(vertex.x * PIXELS_PER_METER, vertex.y * PIXELS_PER_METER);
+      ctx.lineTo((vertex.x + DrawOffset.x) * PIXELS_PER_METER, (vertex.y + DrawOffset.y) * PIXELS_PER_METER);
     }
   }
   ctx.closePath();
@@ -132,7 +133,7 @@ const drawPolygon = (vertices, fill) => {
 
 const drawCircle = (center, radius, axis, fill) => {
   ctx.beginPath();
-  ctx.arc(center.x * PIXELS_PER_METER, center.y * PIXELS_PER_METER, radius * PIXELS_PER_METER, 0, 2 * Math.PI, false);
+  ctx.arc(center.x * PIXELS_PER_METER + DrawOffset.x, center.y * PIXELS_PER_METER + DrawOffset.y, radius * PIXELS_PER_METER, 0, 2 * Math.PI, false);
   if (fill) {
     ctx.fillStyle = '#ffffff';
     ctx.fill();
@@ -307,4 +308,4 @@ let terrainhandle = function () {
 
 setFrame(1);
 
-export { render, resize, setFrame, terrain, allBodies, contact };
+export { render, resize, setFrame, terrain, allBodies, contact, DrawOffset };
