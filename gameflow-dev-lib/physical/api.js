@@ -419,23 +419,23 @@ const init1 = (box2D) => {
       })
       _Interface.gc = new Map();
       world.Step(1 / 60, 3, 2);
-      for (
-        let body = recordLeak(world.GetBodyList());
-        getPointer(body) !== getPointer(NULL);
-        body = recordLeak(body.GetNext())
-        ) {
-          // if(_Interface.gc.get(body)){
-          //   world.DestroyBody(body);
-          //   _Interface.gc.delete(body);
-          // }
-        if(!body.id) continue;
-        const pos = body.GetPosition();
-        const {x, y} = pos;
-        let rotation = body.GetAngle();
-        allBodies[body.id] = { position:{x, y}, rotation };
-        // destroy(pos);
-      }
-      // world.DebugDraw();
+      // for (
+      //   let body = recordLeak(world.GetBodyList());
+      //   getPointer(body) !== getPointer(NULL);
+      //   body = recordLeak(body.GetNext())
+      //   ) {
+      //     // if(_Interface.gc.get(body)){
+      //     //   world.DestroyBody(body);
+      //     //   _Interface.gc.delete(body);
+      //     // }
+      //   if(!body.id) continue;
+      //   const pos = body.GetPosition();
+      //   const {x, y} = pos;
+      //   let rotation = body.GetAngle();
+      //   allBodies[body.id] = { position:{x, y}, rotation };
+      //   // destroy(pos);
+      // }
+      world.DebugDraw();
       world.ClearForces();
       // lastInfoPost();
       postMessage({ shape: stack, allBodies, contact });

@@ -725,10 +725,12 @@ hw();a.b2Manifold.e_faceA=iw();a.b2Manifold.e_faceB=jw();a.b2_staticBody=kw();a.
 }
 );
 })();
-if (typeof exports === 'object' && typeof module === 'object')
-      module.exports = Box2D;
-    else if (typeof define === 'function' && define['amd'])
-      define([], function() { return Box2D; });
-    else if (typeof exports === 'object')
-      exports["Box2D"] = Box2D;
+export { Box2D };
+export default Box2D;
+// if (typeof exports === 'object' && typeof module === 'object')
+//       module.exports = Box2D;
+//     else if (typeof define === 'function' && define['amd'])
+//       define([], function() { return Box2D; });
+//     else if (typeof exports === 'object')
+//       exports["Box2D"] = Box2D;
     

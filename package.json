@@ -24,6 +24,9 @@
 	"dependencies": {
 		"@dimforge/rapier2d": "^0.13.1",
 		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@theatre/core": "^0.7.2",
+		"@theatre/r3f": "^0.7.2",
+		"@theatre/studio": "^0.7.2",
 		"benchmark": "^2.1.4",
 		"box2d-wasm": "^7.0.0",
 		"chokidar": "^3.6.0",
