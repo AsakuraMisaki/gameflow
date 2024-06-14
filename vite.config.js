@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
-// import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+import wasm from 'vite-plugin-wasm';
 
 export default defineConfig({
 	server: {
@@ -8,8 +9,8 @@ export default defineConfig({
 		host: true // 设置为 true 表示监听所有地址
 	},
 	plugins: [
-		// svelte({emitCss: false,}), 
-		// wasm(),
+		svelte({emitCss: false,}), 
+		wasm(),
 		// topLevelAwait()
 	]
 })
