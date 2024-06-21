@@ -1,13 +1,15 @@
 // rollup.config.js
 import svelte from 'rollup-plugin-svelte';
 import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+
 
 export default {
-  input: 'gameflow-dev-lib/support/simplify.js',
+  input: 'public/main.js',
   output: {
-    file: 'public/bundle.js',
-    format: 'esm',
-    // name: 'SvelteBuiltIn' // 这里替换为你的库名称
+    file: 'public/pixi714.js',
+    format: 'umd',
+    name: 'PIXI' // 这里替换为你的库名称
   },
   plugins: [
     svelte({
@@ -59,10 +61,12 @@ export default {
     }),
     // see NOTICE below
     resolve({
+      preferBuiltins: false,
       browser: true,
-      exportConditions: ['svelte'],
-      extensions: ['.svelte']
+      // exportConditions: ['svelte'],
+      // extensions: ['.svelte']
     }),
+    commonjs()
     // ...
   ]
 }
