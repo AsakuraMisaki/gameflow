@@ -1,0 +1,70 @@
+{
+  "spec": {
+    "type": "`U`&`G`",
+    "name": "untitled",
+    "units": {
+      "and": {
+        "id": "407640f7-f1c3-4297-a5ce-baff357a6d31",
+        "input": {
+          "a": {
+            "constant": true,
+            "data": {
+              "ref": [],
+              "data": false
+            },
+            "metadata": {
+              "position": {
+                "x": -48,
+                "y": 18
+              },
+              "data": {
+                "position": {
+                  "x": -85,
+                  "y": 37
+                }
+              }
+            }
+          },
+          "b": {
+            "metadata": {
+              "position": {
+                "x": -48,
+                "y": -19
+              }
+            }
+          }
+        },
+        "output": {
+          "a and b": {
+            "metadata": {
+              "position": {
+                "x": 46,
+                "y": -1
+              }
+            }
+          }
+        },
+        "metadata": {
+          "position": {
+            "x": -3,
+            "y": -1
+          }
+        }
+      }
+    },
+    "merges": {},
+    "inputs": {},
+    "outputs": {},
+    "metadata": {
+      "icon": null,
+      "description": "",
+      "complexity": 5
+    },
+    "id": "9f398594-819a-4d06-80b1-39926d59c5ba",
+    "component": {
+      "defaultWidth": -9007199254740991,
+      "defaultHeight": -9007199254740991
+    }
+  },
+  "specs": {}
+}

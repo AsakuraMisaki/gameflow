@@ -7,7 +7,7 @@ import commonjs from '@rollup/plugin-commonjs';
 export default {
   input: 'public/main.js',
   output: {
-    file: 'public/pixi714.js',
+    file: 'static/pixi.js',
     format: 'umd',
     name: 'PIXI' // 这里替换为你的库名称
   },

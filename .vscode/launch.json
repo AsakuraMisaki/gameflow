@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "type": "python",
+            "request": "launch",
+            "name": "psdauto",
+            "program": "${workspaceFolder}/static/psdauto.py",
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "t1",

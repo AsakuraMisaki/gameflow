@@ -55,7 +55,7 @@
     "matter-js": "^0.19.0",
     "opencv-wasm": "^4.3.0-10",
     "pixi-spine": "^4.0.4",
-    "pixijs": "lastest",
+    "pixi.js": "^7.4.2",
     "poly-partition": "^1.0.2",
     "serve-index": "^1.9.1",
     "simplify-js": "^1.2.4",

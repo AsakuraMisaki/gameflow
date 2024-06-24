@@ -6,5 +6,5 @@ export function es5New (_class, context, ...args) {
 
 // PIXI.Renderer.registerPlugin
 export function registerPlugin (pluginName, ctor) {
-    Renderer.__plugins[pluginName] = ctor;
+    this.__plugins[pluginName] = ctor;
 };
